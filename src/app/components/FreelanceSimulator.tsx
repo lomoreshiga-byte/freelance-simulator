@@ -1,36 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import {
-  Calculator,
-  Wallet,
-  PiggyBank,
-  CheckCircle2,
-  AlertCircle,
-  HelpCircle,
-  TrendingDown,
-  Gift,
-  Building2,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-  Legend,
-} from "recharts";
-
-// Chart Colors
-const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444"];
-
-/**
- * Freelance Lifestyle Defense Fund Simulator
- *
- * A single-file Next.js client component to calculate "Real Take-home" vs "Tax Pool".
- */
+import React, { useState, useMemo, useEffect } from "react";
 
 // --- Pure Calculation Logic ---
 interface ScenarioInputs {
@@ -44,7 +14,12 @@ interface ScenarioInputs {
   mapApp: number;
   customExpensesTotal: number;
   annualCustomExpensesTotal: number;
-  manualTax: number;
+  incomeTax: number;
+  residentTax: number;
+  healthInsurance: number;
+  pension: number;
+  businessTax: number;
+  consumptionTax: number;
   idecoMonthly: number;
   kyosaiMonthly: number;
 }
@@ -53,36 +28,22 @@ function calculateFreelanceScenario(inputs: ScenarioInputs) {
   const {
     dailyRate, workDays, commissionRate, businessGuarantee, cargoInsurance,
     vehicleRental, vehicleInsurance, mapApp, customExpensesTotal, annualCustomExpensesTotal,
-    manualTax,
+    incomeTax, residentTax, healthInsurance, pension, businessTax, consumptionTax,
     idecoMonthly, kyosaiMonthly
   } = inputs;
 
-  // Convert annual to monthly
   const annualExpensesMonthlyBuffer = annualCustomExpensesTotal / 12;
-
-  // 1. Sales
   const annualSales = dailyRate * workDays * 12;
   const monthlyGrossSales = annualSales / 12;
-
-  // 2. Business Expenses (Deductible)
   const monthlyCommission = monthlyGrossSales * (commissionRate / 100);
   const monthlyFixedExpenses = businessGuarantee + cargoInsurance + vehicleRental + vehicleInsurance + mapApp + customExpensesTotal + annualExpensesMonthlyBuffer;
   const totalMonthlyExpenses = monthlyCommission + monthlyFixedExpenses;
   const annualExpenses = totalMonthlyExpenses * 12;
-
-  // 3. Tax / Social Insurance (Manual Input)
-  // This is now a direct subtraction from cashflow
-  const monthlyTaxPool = manualTax;
-
-  // 4. Savings (Cash outflows that are assets)
-  // iDeCo & Kyosai
+  const monthlyTaxPool = incomeTax + residentTax + healthInsurance + pension + businessTax + consumptionTax;
   const totalMonthlySavings = idecoMonthly + kyosaiMonthly;
-
-  // 5. "True" Take Home (Lifestyle Fund)
   const businessCashflow = monthlyGrossSales - totalMonthlyExpenses - totalMonthlySavings;
   const realTakeHome = businessCashflow - monthlyTaxPool;
 
-  // Chart Data
   const chartData = [
     { name: "手取り", value: Math.round(realTakeHome) },
     { name: "経費", value: Math.round(totalMonthlyExpenses + totalMonthlySavings) },
@@ -92,51 +53,117 @@ function calculateFreelanceScenario(inputs: ScenarioInputs) {
   return {
     chartData,
     annualSales,
+    monthlyGrossSales,
+    totalMonthlyExpenses,
     annualExpenses,
     monthlyTaxPool,
-    realTakeHome,
-    monthlyGrossSales,
     totalMonthlySavings,
-    monthlyCommission,
-    totalMonthlyExpenses
+    businessCashflow,
+    realTakeHome,
+    annualCustomExpensesTotal,
   };
 }
 
+// Simple Tooltip Component
+function Tooltip({ text, children }: { text: string; children: React.ReactNode }) {
+  const [show, setShow] = useState(false);
+
+  return (
+    <div className="relative inline-block">
+      <div
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+        onClick={() => setShow(!show)}
+        className="cursor-help"
+      >
+        {children}
+      </div>
+      {show && (
+        <div className="absolute z-50 w-64 p-3 text-xs text-slate-700 bg-white border border-slate-200 rounded-lg shadow-xl -top-2 left-6 animate-in fade-in duration-200">
+          {text}
+          <div className="absolute w-2 h-2 bg-white border-l border-b border-slate-200 transform rotate-45 -left-1 top-3"></div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function FreelanceSimulator() {
-  // --- State ---
-  // Basic
-  const [dailyRate, setDailyRate] = useState<number | "">(17424);
-  const [workDays, setWorkDays] = useState<number | "">(21);
 
-  // Expenses Breakdown
-  const [commissionRate, setCommissionRate] = useState<number | "">(12); // %
-  const [businessGuarantee, setBusinessGuarantee] = useState<number | "">(1000);
-  const [cargoInsurance, setCargoInsurance] = useState<number | "">(1500);
-  const [vehicleRental, setVehicleRental] = useState<number | "">(35000);
-  const [vehicleInsurance, setVehicleInsurance] = useState<number | "">(0);
-  const [mapApp, setMapApp] = useState<number | "">(300);
-  // Custom Expenses (Dynamic List)
-  const [customExpenses, setCustomExpenses] = useState<{ id: number; name: string; amount: number | "" }[]>([
-    { id: 1, name: "その他経費", amount: 0 },
-  ]);
-  // Annual Custom Expenses
-  const [annualCustomExpenses, setAnnualCustomExpenses] = useState<{ id: number; name: string; amount: number | "" }[]>([
-    { id: 1, name: "年会費・税金等", amount: 0 },
-  ]);
+  const fmt = (num: number) => `¥${num.toLocaleString()}`;
 
-  // Attributes
-  // Tax & Savings (Manual & iDeCo/Kyosai)
-  const [manualTax, setManualTax] = useState<number | "">(50000); // Default manual tax
-  const [idecoMonthly, setIdecoMonthly] = useState<number | "">(0); // Max 68,000
-  const [kyosaiMonthly, setKyosaiMonthly] = useState<number | "">(0); // Max 70,000
+  // State
+  // State
+  const [dailyRate, setDailyRate] = useState<string>("");
+  const [workDays, setWorkDays] = useState<string>("");
+  const [commissionRate, setCommissionRate] = useState<string>("");
+  const [businessGuarantee, setBusinessGuarantee] = useState<string>("");
+  const [cargoInsurance, setCargoInsurance] = useState<string>("");
+  const [vehicleRental, setVehicleRental] = useState<string>("");
+  const [vehicleInsurance, setVehicleInsurance] = useState<string>("");
+  const [mapApp, setMapApp] = useState<string>("");
+  const [incomeTax, setIncomeTax] = useState<string>("");
+  const [residentTax, setResidentTax] = useState<string>("");
+  const [healthInsurance, setHealthInsurance] = useState<string>("");
+  const [pension, setPension] = useState<string>("");
+  const [businessTax, setBusinessTax] = useState<string>("");
+  const [consumptionTax, setConsumptionTax] = useState<string>("");
+  const [idecoMonthly, setIdecoMonthly] = useState<string>("");
+  const [kyosaiMonthly, setKyosaiMonthly] = useState<string>("");
 
-  // UI State
-  const [showAdvanced, setShowAdvanced] = useState(true);
+  const [customExpenses, setCustomExpenses] = useState<Array<{ name: string; amount: string }>>([]);
+  const [annualCustomExpenses, setAnnualCustomExpenses] = useState<Array<{ name: string; amount: string }>>([]);
 
+  // State for adding new custom expenses
+  const [newExpenseName, setNewExpenseName] = useState("");
+  const [newExpenseAmount, setNewExpenseAmount] = useState<string>("");
 
+  // State for adding new annual expenses
+  const [newAnnualExpenseName, setNewAnnualExpenseName] = useState("");
+  const [newAnnualExpenseAmount, setNewAnnualExpenseAmount] = useState<string>("");
 
-  // --- Calculations ---
+  // Functions to manage custom expenses
+  const addCustomExpense = () => {
+    if (newExpenseName.trim() && newExpenseAmount !== "") {
+      setCustomExpenses([...customExpenses, { name: newExpenseName, amount: newExpenseAmount }]);
+      setNewExpenseName("");
+      setNewExpenseAmount("");
+    }
+  };
+
+  const removeCustomExpense = (index: number) => {
+    setCustomExpenses(customExpenses.filter((_, i) => i !== index));
+  };
+
+  const updateCustomExpense = (index: number, amount: string) => {
+    const updated = [...customExpenses];
+    updated[index].amount = amount;
+    setCustomExpenses(updated);
+  };
+
+  // Functions to manage annual expenses
+  const addAnnualExpense = () => {
+    if (newAnnualExpenseName.trim() && newAnnualExpenseAmount !== "") {
+      setAnnualCustomExpenses([...annualCustomExpenses, { name: newAnnualExpenseName, amount: newAnnualExpenseAmount }]);
+      setNewAnnualExpenseName("");
+      setNewAnnualExpenseAmount("");
+    }
+  };
+
+  const removeAnnualExpense = (index: number) => {
+    setAnnualCustomExpenses(annualCustomExpenses.filter((_, i) => i !== index));
+  };
+
+  const updateAnnualExpense = (index: number, amount: string) => {
+    const updated = [...annualCustomExpenses];
+    updated[index].amount = amount;
+    setAnnualCustomExpenses(updated);
+  };
+
   const result = useMemo(() => {
+    const customExpensesTotal = customExpenses.reduce((sum, item) => sum + Number(item.amount), 0);
+    const annualCustomExpensesTotal = annualCustomExpenses.reduce((sum, item) => sum + Number(item.amount), 0);
+
     return calculateFreelanceScenario({
       dailyRate: Number(dailyRate),
       workDays: Number(workDays),
@@ -146,632 +173,674 @@ export default function FreelanceSimulator() {
       vehicleRental: Number(vehicleRental),
       vehicleInsurance: Number(vehicleInsurance),
       mapApp: Number(mapApp),
-      customExpensesTotal: customExpenses.reduce((sum, item) => sum + Number(item.amount), 0),
-      annualCustomExpensesTotal: annualCustomExpenses.reduce((sum, item) => sum + Number(item.amount), 0),
-      manualTax: Number(manualTax),
+      customExpensesTotal,
+      annualCustomExpensesTotal,
+      healthInsurance: Number(healthInsurance),
+      pension: Number(pension),
+      incomeTax: Number(incomeTax),
+      residentTax: Number(residentTax),
+      businessTax: Number(businessTax),
+      consumptionTax: Number(consumptionTax),
       idecoMonthly: Number(idecoMonthly),
       kyosaiMonthly: Number(kyosaiMonthly),
     });
   }, [
-    dailyRate,
-    workDays,
-    commissionRate,
-    businessGuarantee,
-    cargoInsurance,
-    vehicleRental,
-    vehicleInsurance,
-    mapApp,
-    customExpenses,
-    annualCustomExpenses,
-    manualTax,
-    idecoMonthly,
-    kyosaiMonthly,
+    dailyRate, workDays, commissionRate, businessGuarantee, cargoInsurance,
+    vehicleRental, vehicleInsurance, mapApp, customExpenses, annualCustomExpenses,
+    healthInsurance, pension, incomeTax, residentTax, businessTax, consumptionTax,
+    idecoMonthly, kyosaiMonthly,
   ]);
 
+  // Load data from LocalStorage on mount
+  useEffect(() => {
+    const savedData = localStorage.getItem("freelance-simulator-data");
+    if (savedData) {
+      try {
+        const data = JSON.parse(savedData);
+        if (data.dailyRate !== undefined) setDailyRate(String(data.dailyRate));
+        if (data.workDays !== undefined) setWorkDays(String(data.workDays));
+        if (data.commissionRate !== undefined) setCommissionRate(String(data.commissionRate));
+        if (data.businessGuarantee !== undefined) setBusinessGuarantee(String(data.businessGuarantee));
+        if (data.cargoInsurance !== undefined) setCargoInsurance(String(data.cargoInsurance));
+        if (data.vehicleRental !== undefined) setVehicleRental(String(data.vehicleRental));
+        if (data.vehicleInsurance !== undefined) setVehicleInsurance(String(data.vehicleInsurance));
+        if (data.mapApp !== undefined) setMapApp(String(data.mapApp));
+        if (data.customExpenses !== undefined) setCustomExpenses(data.customExpenses.map((i: { name: string; amount: string | number }) => ({ ...i, amount: String(i.amount) })));
+        if (data.annualCustomExpenses !== undefined) setAnnualCustomExpenses(data.annualCustomExpenses.map((i: { name: string; amount: string | number }) => ({ ...i, amount: String(i.amount) })));
+        if (data.incomeTax !== undefined) setIncomeTax(String(data.incomeTax));
+        if (data.residentTax !== undefined) setResidentTax(String(data.residentTax));
+        if (data.healthInsurance !== undefined) setHealthInsurance(String(data.healthInsurance));
+        if (data.pension !== undefined) setPension(String(data.pension));
+        if (data.businessTax !== undefined) setBusinessTax(String(data.businessTax));
+        if (data.consumptionTax !== undefined) setConsumptionTax(String(data.consumptionTax));
+        if (data.idecoMonthly !== undefined) setIdecoMonthly(String(data.idecoMonthly));
+        if (data.kyosaiMonthly !== undefined) setKyosaiMonthly(String(data.kyosaiMonthly));
+      } catch (e) {
+        console.error("Failed to load saved data:", e);
+      }
+    }
+  }, []);
 
+  // Save data to LocalStorage whenever state changes
+  useEffect(() => {
+    const dataToSave = {
+      dailyRate,
+      workDays,
+      commissionRate,
+      businessGuarantee,
+      cargoInsurance,
+      vehicleRental,
+      vehicleInsurance,
+      mapApp,
+      customExpenses,
+      annualCustomExpenses,
+      incomeTax,
+      residentTax,
+      healthInsurance,
+      pension,
+      businessTax,
+      consumptionTax,
+      idecoMonthly,
+      kyosaiMonthly,
+    };
+    localStorage.setItem("freelance-simulator-data", JSON.stringify(dataToSave));
+  }, [
+    dailyRate, workDays, commissionRate, businessGuarantee, cargoInsurance,
+    vehicleRental, vehicleInsurance, mapApp, customExpenses, annualCustomExpenses,
+    healthInsurance, pension, incomeTax, residentTax, businessTax, consumptionTax,
+    idecoMonthly, kyosaiMonthly,
+  ]);
 
-  // Utility to format currency
-  const fmt = (n: number) =>
-    new Intl.NumberFormat("ja-JP", {
-      style: "currency",
-      currency: "JPY",
-      maximumFractionDigits: 0,
-    }).format(n);
+  // Reset all data
+  const resetAllData = () => {
+    if (confirm("全てのデータをリセットしますか?")) {
+      localStorage.removeItem("freelance-simulator-data");
+      setDailyRate("");
+      setWorkDays("");
+      setCommissionRate("");
+      setBusinessGuarantee("");
+      setCargoInsurance("");
+      setVehicleRental("");
+      setVehicleInsurance("");
+      setMapApp("");
+      setCustomExpenses([]);
+      setAnnualCustomExpenses([]);
+      setIncomeTax("");
+      setResidentTax("");
+      setHealthInsurance("");
+      setPension("");
+      setBusinessTax("");
+      setConsumptionTax("");
+      setIdecoMonthly("");
+      setKyosaiMonthly("");
+    }
+  };
+
+  const revenuePercentage = result.monthlyGrossSales > 0
+    ? ((result.realTakeHome / result.monthlyGrossSales) * 100).toFixed(1)
+    : "0.0";
 
   return (
-    <div className="w-full max-w-5xl mx-auto p-4 md:p-6 bg-slate-50 min-h-screen font-sans text-slate-800">
-      <header className="mb-8 flex items-center space-x-3 border-b-2 border-indigo-100 pb-4">
-        <div className="p-3 bg-indigo-600 rounded-lg shadow-lg">
-          <Calculator className="w-8 h-8 text-white" />
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+
+        {/* Header */}
+        <header className="mb-8">
+          <div className="flex items-start justify-between mb-2">
+            <div>
+              <h1 className="text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight">
+                個人事業主お金シミュレーター
+              </h1>
+              <p className="text-slate-600 text-sm lg:text-base mt-2">
+                税金・経費を引いた&quot;真の手取り&quot;を即座に計算
+              </p>
+            </div>
+            <button
+              onClick={resetAllData}
+              className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:text-red-600 hover:border-red-300 transition-colors"
+            >
+              リセット
+            </button>
+          </div>
+        </header>
+
+        {/* Hero Section - Dashboard Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+
+          {/* Monthly Revenue Card */}
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 lg:p-8">
+            <div className="mb-4">
+              <h3 className="text-sm font-medium text-slate-600">月商（売上）</h3>
+            </div>
+            <div className="text-4xl lg:text-5xl font-bold text-slate-900 mb-2">
+              {fmt(result.monthlyGrossSales)}
+            </div>
+            <p className="text-sm text-slate-500">年間売上: {fmt(result.annualSales)}</p>
+          </div>
+
+          {/* Real Take Home Card */}
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 lg:p-8">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-medium text-slate-600">本当の手取り</h3>
+              <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+                {revenuePercentage}%
+              </span>
+            </div>
+            <div className="text-4xl lg:text-5xl font-bold text-emerald-700 mb-6">
+              {fmt(result.realTakeHome)}
+            </div>
+
+            {/* Visual Progress Bar */}
+            <div className="space-y-2">
+              <div className="text-xs text-slate-600 mb-2">
+                <span>収入の内訳</span>
+              </div>
+              <div className="h-2 bg-slate-100 rounded-full overflow-hidden flex">
+                <div
+                  className="bg-emerald-600 transition-all duration-500"
+                  style={{ width: `${Math.max(0, Math.min(100, (result.realTakeHome / result.monthlyGrossSales) * 100))}%` }}
+                  title="手取り"
+                />
+                <div
+                  className="bg-amber-500 transition-all duration-500"
+                  style={{ width: `${Math.max(0, Math.min(100, (result.totalMonthlyExpenses / result.monthlyGrossSales) * 100))}%` }}
+                  title="経費"
+                />
+                <div
+                  className="bg-rose-600 transition-all duration-500"
+                  style={{ width: `${Math.max(0, Math.min(100, (result.monthlyTaxPool / result.monthlyGrossSales) * 100))}%` }}
+                  title="税金"
+                />
+              </div>
+              <div className="flex gap-4 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 bg-emerald-600 rounded-full"></div>
+                  <span className="text-slate-600">手取り</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                  <span className="text-slate-600">経費</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 bg-rose-600 rounded-full"></div>
+                  <span className="text-slate-600">税金</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
-            生活防衛資金シミュレーター
-          </h1>
-          <p className="text-slate-500 text-sm md:text-base">
-            簡単・シンプルな手取り計算
-          </p>
-        </div>
-      </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-24">
-        {/* OUTPUTS SECTION (Mobile: Top, Desktop: Right) */}
-        <div className="lg:col-span-7 space-y-5 order-1 lg:order-2">
-          {/* Key Metrics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-            {/* Simplified to 2 Cards: Sales -> Take Home */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {/* 1. Monthly Sales Card */}
-              <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg p-5 text-white relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
-                  <Building2 size={60} />
-                </div>
-                <p className="text-blue-100 font-medium mb-1 flex items-center text-xs md:text-sm">
-                  <CheckCircle2 className="w-3 h-3 mr-1" />
-                  月商
-                </p>
-                <div className="text-2xl md:text-3xl font-bold tracking-tight mt-1">
-                  {fmt(result.monthlyGrossSales)}
-                </div>
-              </div>
+        {/* Bento Grid - Input Sections */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
 
-              {/* 2. Real Take Home Card */}
-              <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl shadow-lg p-5 text-white relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
-                  <Wallet size={60} />
-                </div>
-                <p className="text-emerald-100 font-medium mb-1 flex items-center text-xs md:text-sm">
-                  <CheckCircle2 className="w-3 h-3 mr-1" />
-                  本当の手取り
-                </p>
-                <div className="text-2xl md:text-3xl font-bold tracking-tight mt-1">
-                  {fmt(result.realTakeHome)}
-                </div>
-                <p className="text-emerald-100/80 text-[10px] md:text-xs mt-2">
-                  ※税金・社保・経費を引いた残り
-                </p>
-              </div>
+          {/* Income Settings */}
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold text-slate-900">収入・稼働設定</h2>
             </div>
 
-            {/* Explanatory Note */}
-            <div className="text-xs text-slate-400 text-right">
-              ※ 手取り = 売上 - (経費 + 節税 + 税金・社保)
-            </div>
-
-
-
-            {/* Chart Section */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
-              <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
-                <PiggyBank className="w-5 h-5 mr-2 text-indigo-600" />
-                収支内訳 (月額)
-              </h3>
-              <div className="h-64 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={result.chartData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={80}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {result.chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(value: any) => fmt(Number(value) || 0)}
-                      contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                    />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
+            <div className="space-y-6">
+              {/* Daily Rate */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium text-slate-600">
+                    日給単価 (税込)
+                  </label>
+                </div>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={dailyRate}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (/^\d*$/.test(val)) setDailyRate(val);
+                  }}
+                  className="w-full px-4 py-2.5 text-right text-lg font-mono bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                  placeholder="0"
+                />
               </div>
-            </div>
 
-            {/* Detailed Breakdown (Desktop mainly, but good for mobile details too) */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 md:p-6">
-              <h3 className="text-md md:text-lg font-semibold mb-4 text-slate-800">月間資金フロー内訳</h3>
-              <div className="space-y-3 md:space-y-4 border-t border-slate-100 pt-4">
-                {/* Row 1: Sales */}
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-slate-600 font-medium">月商</span>
-                  <span className="font-bold text-slate-800">{fmt(result.monthlyGrossSales)}</span>
+              {/* Work Days */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium text-slate-600">月間稼働日数</label>
+                  <span className="text-sm font-semibold text-slate-900">{workDays}日</span>
                 </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="31"
+                  value={Number(workDays)}
+                  onChange={(e) => setWorkDays(e.target.value)}
+                  className="w-full h-2.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-indigo-600"
+                />
+              </div>
 
-                {/* Deductions Block */}
-                <div className="pl-4 border-l-2 border-slate-100 space-y-2">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-500">経費</span>
-                    <span className="text-slate-500">- {fmt(result.totalMonthlyExpenses)}</span>
-                  </div>
-                  {(result.totalMonthlySavings > 0) && (
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-blue-600 font-medium flex items-center">
-                        <TrendingDown className="w-3 h-3 mr-1" />
-                        節税積立 (iDeCo等)
-                      </span>
-                      <span className="text-blue-600 text-right">- {fmt(result.totalMonthlySavings)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-rose-600 font-medium flex items-center">
-                      <PiggyBank className="w-3 h-3 mr-1" />
-                      税金
-                    </span>
-                    <span className="text-rose-600">- {fmt(result.monthlyTaxPool)}</span>
-                  </div>
+              {/* Commission Rate */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium text-slate-600">
+                    手数料率
+                  </label>
+                  <span className="text-sm font-semibold text-slate-900">{commissionRate}%</span>
                 </div>
-
-                {/* Final Result */}
-                <div className="flex justify-between items-center text-sm pt-4 border-t border-dashed border-slate-200">
-                  <span className="font-bold text-slate-800 text-lg">手残り (生活費)</span>
-                  <span className="font-bold text-emerald-600 text-2xl">{fmt(result.realTakeHome)}</span>
-                </div>
-
+                <input
+                  type="range"
+                  min="0"
+                  max="30"
+                  value={Number(commissionRate)}
+                  onChange={(e) => setCommissionRate(e.target.value)}
+                  className="w-full h-2.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-indigo-600"
+                />
               </div>
             </div>
           </div>
 
-          {/* INPUTS SECTION (Mobile: Bottom, Desktop: Left) */}
-          <div className="lg:col-span-5 space-y-6 order-2 lg:order-1">
+          {/* Fixed Expenses */}
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold text-slate-900">固定経費（月額）</h2>
+            </div>
 
-            {/* Section 1: Income & Basic Work */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 md:p-6">
-              <h2 className="text-lg font-semibold mb-4 flex items-center text-slate-700">
-                <CheckCircle2 className="w-5 h-5 mr-2 text-indigo-500" />
-                収入・稼働設定
-              </h2>
-
-
-
-              {/* Daily Rate */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium mb-3 text-slate-600">
-                  日給単価 (税抜)
-                </label>
-                <div className="flex items-center space-x-4">
+            <div className="space-y-4">
+              {[
+                { label: "事業保障", value: businessGuarantee, setter: setBusinessGuarantee },
+                { label: "貨物保険", value: cargoInsurance, setter: setCargoInsurance },
+                { label: "車両レンタル", value: vehicleRental, setter: setVehicleRental },
+                { label: "車両保険", value: vehicleInsurance, setter: setVehicleInsurance },
+                { label: "地図アプリ", value: mapApp, setter: setMapApp },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center gap-3">
+                  <label className="text-sm font-medium text-slate-600 min-w-[100px]">{item.label}</label>
                   <input
-                    type="range"
-                    min="10000"
-                    max="100000"
-                    step="1000"
-                    value={Number(dailyRate)}
-                    onChange={(e) => setDailyRate(Number(e.target.value))}
-                    className="w-full h-8 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600 active:accent-indigo-700 touch-none"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={item.value}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (/^\d*$/.test(val)) item.setter(val);
+                    }}
+                    className="flex-1 px-3 py-2 text-right font-mono text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                    placeholder="0"
+                  />
+                  <span className="text-sm text-slate-500">円</span>
+                </div>
+              ))}
+
+              {/* Custom Expenses */}
+              {customExpenses.length > 0 && (
+                <>
+                  <div className="pt-3 border-t border-slate-200"></div>
+                  {customExpenses.map((expense, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <label className="text-sm font-medium text-slate-600 min-w-[100px]">{expense.name}</label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={expense.amount}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (/^\d*$/.test(val)) updateCustomExpense(index, val);
+                        }}
+                        className="flex-1 px-3 py-2 text-right font-mono text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                        placeholder="0"
+                      />
+                      <span className="text-sm text-slate-500">円</span>
+                      <button
+                        onClick={() => removeCustomExpense(index)}
+                        className="text-slate-400 hover:text-red-600 transition-colors p-1"
+                        title="削除"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {/* Add New Expense Form */}
+              <div className="pt-3 border-t border-slate-200">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={newExpenseName}
+                    onChange={(e) => setNewExpenseName(e.target.value)}
+                    placeholder="項目名"
+                    className="w-32 px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
                   />
                   <input
                     type="text"
                     inputMode="numeric"
                     pattern="[0-9]*"
-                    value={dailyRate}
+                    value={newExpenseAmount}
                     onChange={(e) => {
                       const val = e.target.value;
-                      if (/^\d*$/.test(val)) {
-                        setDailyRate(val === "" ? "" : Number(val));
-                      }
+                      if (/^\d*$/.test(val)) setNewExpenseAmount(val);
                     }}
-                    className="w-24 p-2 text-lg border border-slate-300 rounded text-right font-mono"
+                    placeholder="金額"
+                    className="flex-1 px-3 py-2 text-right font-mono text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
                   />
+                  <span className="text-sm text-slate-500">円</span>
+                  <button
+                    onClick={addCustomExpense}
+                    className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors whitespace-nowrap"
+                  >
+                    + 追加
+                  </button>
                 </div>
-                <p className="text-xs text-slate-400 mt-2 text-right">
-                  年商: {fmt(Number(dailyRate) * Number(workDays) * 12)}
-                </p>
               </div>
 
-              {/* Work Days */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-3 text-slate-600">
-                  月間稼働日数
-                </label>
-                <div className="flex items-center space-x-4">
+              <div className="pt-4 border-t border-slate-200 flex justify-between items-center">
+                <span className="text-sm font-medium text-slate-700">経費合計</span>
+                <span className="text-lg font-bold text-slate-900">{fmt(result.totalMonthlyExpenses)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Annual Expenses */}
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold text-slate-900">年間経費（年払い）</h2>
+              <p className="text-sm text-slate-500 mt-1">
+                年払いの保険料やサーバー代、確定申告費用など。<br />
+                月額換算して固定経費に含まれます。
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {annualCustomExpenses.length > 0 && (
+                <>
+                  {annualCustomExpenses.map((expense, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <label className="text-sm font-medium text-slate-600 min-w-[100px]">{expense.name}</label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={expense.amount}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (/^\d*$/.test(val)) updateAnnualExpense(index, val);
+                        }}
+                        className="flex-1 px-3 py-2 text-right font-mono text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                        placeholder="0"
+                      />
+                      <span className="text-sm text-slate-500">円</span>
+                      <button
+                        onClick={() => removeAnnualExpense(index)}
+                        className="text-slate-400 hover:text-red-600 transition-colors p-1"
+                        title="削除"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                  <div className="pt-3 border-t border-slate-200"></div>
+                </>
+              )}
+
+              {/* Add New Annual Expense Form */}
+              <div className="">
+                <div className="flex items-center gap-2">
                   <input
-                    type="range"
-                    min="10"
-                    max="31"
-                    step="1"
-                    value={Number(workDays)}
-                    onChange={(e) => setWorkDays(Number(e.target.value))}
-                    className="w-full h-8 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600 active:accent-indigo-700 touch-none"
+                    type="text"
+                    value={newAnnualExpenseName}
+                    onChange={(e) => setNewAnnualExpenseName(e.target.value)}
+                    placeholder="項目名"
+                    className="w-32 px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
                   />
-                  <span className="w-24 text-right font-mono font-bold text-xl">{workDays}日</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={newAnnualExpenseAmount}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (/^\d*$/.test(val)) setNewAnnualExpenseAmount(val);
+                    }}
+                    placeholder="金額"
+                    className="flex-1 px-3 py-2 text-right font-mono text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                  />
+                  <span className="text-sm text-slate-500">円</span>
+                  <button
+                    onClick={addAnnualExpense}
+                    className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors whitespace-nowrap"
+                  >
+                    + 追加
+                  </button>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-200 flex justify-between items-center">
+                <span className="text-sm font-medium text-slate-700">年間合計</span>
+                <div className="text-right">
+                  <span className="text-lg font-bold text-slate-900">{fmt(result.annualCustomExpensesTotal)}</span>
+                  <p className="text-xs text-slate-500">月額換算: {fmt(Math.round(result.annualCustomExpensesTotal / 12))}</p>
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Section 2: Expenses & Family */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 md:p-6">
-              <h2 className="text-lg font-semibold mb-4 flex items-center text-slate-700">
-                <Building2 className="w-5 h-5 mr-2 text-indigo-500" />
-                経費・家族設定
-              </h2>
+          {/* Social Insurance */}
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold text-slate-900">社会保険（毎月の支払い）</h2>
+            </div>
 
-              <div className="space-y-4 mb-6">
-                {/* Commission */}
-                <div className="p-3 bg-indigo-50/50 rounded-lg border border-indigo-100">
-                  <label className="block text-sm font-medium mb-3 text-indigo-900">
-                    事務手数料 (売上の{commissionRate}%)
+            <div className="space-y-4">
+              <div>
+                <div className="mb-2">
+                  <label className="text-sm font-medium text-slate-600">
+                    国民健康保険
                   </label>
-                  <div className="flex items-center space-x-6 mb-2">
-                    <label className="flex items-center cursor-pointer">
-                      <input
-                        type="radio"
-                        name="commissionRate"
-                        value={10}
-                        checked={Number(commissionRate) === 10}
-                        onChange={() => setCommissionRate(10)}
-                        className="w-5 h-5 text-indigo-600 focus:ring-indigo-500 border-gray-300"
-                      />
-                      <span className="ml-2 text-slate-700 font-medium">10%</span>
-                    </label>
-                    <label className="flex items-center cursor-pointer">
-                      <input
-                        type="radio"
-                        name="commissionRate"
-                        value={12}
-                        checked={Number(commissionRate) === 12}
-                        onChange={() => setCommissionRate(12)}
-                        className="w-5 h-5 text-indigo-600 focus:ring-indigo-500 border-gray-300"
-                      />
-                      <span className="ml-2 text-slate-700 font-medium">12%</span>
-                    </label>
-                  </div>
-                  <div className="text-right text-indigo-700 font-bold">
-                    -{fmt(result.monthlyCommission)}
-                  </div>
                 </div>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={healthInsurance}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (/^\d*$/.test(val)) setHealthInsurance(val);
+                  }}
+                  className="w-full px-4 py-2.5 text-right font-mono bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                  placeholder="0"
+                />
+              </div>
 
-                {/* Detailed Fixed Expenses */}
-                <div className="space-y-3 pt-2">
-                  <p className="text-sm font-semibold text-slate-700">固定経費</p>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium text-slate-500 mb-1">業務保証料</label>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        value={businessGuarantee}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (/^\d*$/.test(val)) setBusinessGuarantee(val === "" ? "" : Number(val));
-                        }}
-                        className="w-full p-2 border border-slate-300 rounded font-mono text-right"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-500 mb-1">貨物保険</label>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        value={cargoInsurance}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (/^\d*$/.test(val)) setCargoInsurance(val === "" ? "" : Number(val));
-                        }}
-                        className="w-full p-2 border border-slate-300 rounded font-mono text-right"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-500 mb-1">車両レンタル</label>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        value={vehicleRental}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (/^\d*$/.test(val)) setVehicleRental(val === "" ? "" : Number(val));
-                        }}
-                        className="w-full p-2 border border-slate-300 rounded font-mono text-right"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-500 mb-1">車両保険 (任意)</label>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        value={vehicleInsurance}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (/^\d*$/.test(val)) setVehicleInsurance(val === "" ? "" : Number(val));
-                        }}
-                        className="w-full p-2 border border-slate-300 rounded font-mono text-right"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-500 mb-1">地図アプリ</label>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        value={mapApp}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (/^\d*$/.test(val)) setMapApp(val === "" ? "" : Number(val));
-                        }}
-                        className="w-full p-2 border border-slate-300 rounded font-mono text-right"
-                      />
-                    </div>
-                  </div>
+              <div>
+                <div className="mb-2">
+                  <label className="text-sm font-medium text-slate-600">
+                    国民年金
+                  </label>
                 </div>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={pension}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (/^\d*$/.test(val)) setPension(val);
+                  }}
+                  className="w-full px-4 py-2.5 text-right font-mono bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                  placeholder="0"
+                />
+              </div>
 
-                {/* Custom Expenses List */}
-                <div className="space-y-3 pt-4 border-t border-slate-100">
-                  <div className="flex justify-between items-center">
-                    <p className="text-sm font-semibold text-slate-700">その他の経費 (リスト)</p>
-                    <button
-                      onClick={() => {
-                        const newId = customExpenses.length > 0 ? Math.max(...customExpenses.map(c => c.id)) + 1 : 1;
-                        setCustomExpenses([...customExpenses, { id: newId, name: "", amount: "" }]);
-                      }}
-                      className="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded hover:bg-indigo-100 font-medium transition-colors"
-                    >
-                      + 追加
-                    </button>
-                  </div>
-
-                  <div className="space-y-2">
-                    {customExpenses.map((expense, index) => (
-                      <div key={expense.id} className="flex gap-2 items-center">
-                        <input
-                          type="text"
-                          placeholder="項目名"
-                          value={expense.name}
-                          onChange={(e) => {
-                            const newExpenses = [...customExpenses];
-                            newExpenses[index].name = e.target.value;
-                            setCustomExpenses(newExpenses);
-                          }}
-                          className="flex-1 p-2 text-sm border border-slate-300 rounded"
-                        />
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          placeholder="金額"
-                          value={expense.amount}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            if (/^\d*$/.test(val)) {
-                              const newExpenses = [...customExpenses];
-                              newExpenses[index].amount = val === "" ? "" : Number(val);
-                              setCustomExpenses(newExpenses);
-                            }
-                          }}
-                          className="w-24 p-2 text-sm border border-slate-300 rounded font-mono text-right"
-                        />
-                        <button
-                          onClick={() => {
-                            const newExpenses = customExpenses.filter((_, i) => i !== index);
-                            setCustomExpenses(newExpenses);
-                          }}
-                          className="text-slate-400 hover:text-red-500 p-1"
-                          title="削除"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ))}
-                    {customExpenses.length === 0 && (
-                      <p className="text-xs text-slate-400 text-center py-2">経費項目がありません</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Annual Custom Expenses List */}
-                <div className="space-y-3 pt-4 border-t border-slate-100">
-                  <div className="flex justify-between items-center">
-                    <p className="text-sm font-semibold text-slate-700">年払い経費 (リスト)</p>
-                    <button
-                      onClick={() => {
-                        const newId = annualCustomExpenses.length > 0 ? Math.max(...annualCustomExpenses.map(c => c.id)) + 1 : 1;
-                        setAnnualCustomExpenses([...annualCustomExpenses, { id: newId, name: "", amount: "" }]);
-                      }}
-                      className="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded hover:bg-indigo-100 font-medium transition-colors"
-                    >
-                      + 追加
-                    </button>
-                  </div>
-
-                  <div className="space-y-2">
-                    {annualCustomExpenses.map((expense, index) => (
-                      <div key={expense.id} className="flex gap-2 items-center">
-                        <input
-                          type="text"
-                          placeholder="項目名"
-                          value={expense.name}
-                          onChange={(e) => {
-                            const newExpenses = [...annualCustomExpenses];
-                            newExpenses[index].name = e.target.value;
-                            setAnnualCustomExpenses(newExpenses);
-                          }}
-                          className="flex-1 p-2 text-sm border border-slate-300 rounded"
-                        />
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          placeholder="金額 (年額)"
-                          value={expense.amount}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            if (/^\d*$/.test(val)) {
-                              const newExpenses = [...annualCustomExpenses];
-                              newExpenses[index].amount = val === "" ? "" : Number(val);
-                              setAnnualCustomExpenses(newExpenses);
-                            }
-                          }}
-                          className="w-24 p-2 text-sm border border-slate-300 rounded font-mono text-right"
-                        />
-                        <button
-                          onClick={() => {
-                            const newExpenses = annualCustomExpenses.filter((_, i) => i !== index);
-                            setAnnualCustomExpenses(newExpenses);
-                          }}
-                          className="text-slate-400 hover:text-red-500 p-1"
-                          title="削除"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ))}
-                    {annualCustomExpenses.length === 0 && (
-                      <p className="text-xs text-slate-400 text-center py-2">経費項目がありません</p>
-                    )}
-                  </div>
-                  {annualCustomExpenses.reduce((sum, item) => sum + Number(item.amount), 0) > 0 && (
-                    <div className="text-right text-xs text-slate-500">
-                      月額換算: +{fmt(Math.round(annualCustomExpenses.reduce((sum, item) => sum + Number(item.amount), 0) / 12))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="border-t border-slate-100 pt-2 flex justify-between items-center bg-slate-50 p-2 rounded">
-                  <span className="text-sm font-bold text-slate-600">経費合計 (月額)</span>
-                  <span className="text-lg font-bold text-slate-800">{fmt(result.totalMonthlyExpenses)}</span>
-                </div>
-
+              <div className="pt-3 border-t border-slate-200 flex justify-between items-center">
+                <span className="text-sm text-slate-600">社会保険合計</span>
+                <span className="text-sm font-semibold text-slate-900">{fmt(Number(healthInsurance) + Number(pension))}</span>
               </div>
             </div>
-
-
           </div>
 
-          {/* Section 3: Tax Savings & Advanced (Collapsible) */}
-          <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl shadow-sm border border-indigo-100 overflow-hidden">
-            <button
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className="w-full flex justify-between items-center p-4 bg-indigo-100/50 hover:bg-indigo-100 transition-colors text-indigo-900 font-semibold"
-            >
-              <div className="flex items-center">
-                <TrendingDown className="w-5 h-5 mr-2" />
-                税金
-              </div>
-              {showAdvanced ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-            </button>
+          {/* Tax Reserve */}
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold text-slate-900">税金の積立(翌年の支払い用)</h2>
+            </div>
 
-            {showAdvanced && (
-              <div className="p-5 space-y-6">
-
-                {/* Manual Tax Input */}
-                <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <label className="text-sm font-bold text-slate-700">税金 (月額)</label>
-                    <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded-full">手入力</span>
-                  </div>
-                  <div className="flex items-center">
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      value={manualTax}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (/^\d*$/.test(val)) setManualTax(val === "" ? "" : Number(val));
-                      }}
-                      className="flex-1 p-2 border border-slate-300 rounded text-right font-mono text-base bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
-                      placeholder="50000"
-                    />
-                    <span className="ml-2 text-slate-500">円</span>
-                  </div>
-                  <p className="text-[10px] text-slate-400 mt-1">
-                    ※所得税・住民税・国民年金・国民健康保険の合計額を入力してください
-                  </p>
-                </div>
-
-                <div className="border-t border-slate-200 my-4"></div>
-
-                {/* iDeCo */}
-                <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <label className="text-sm font-medium text-slate-700">iDeCo</label>
-                    <span className="text-xs bg-indigo-200 text-indigo-800 px-2 py-0.5 rounded-full">最大68,000</span>
+            <div className="space-y-4">
+              {[
+                {
+                  label: "所得税",
+                  value: incomeTax,
+                  setter: setIncomeTax,
+                  hint: "利益から各種控除を引いた額に、税率（5%〜45%）を掛けて計算。195万円以下なら × 5%。195万〜330万円なら × 10% - 97,500円。× 1.021 （復興特別所得税）"
+                },
+                {
+                  label: "住民税",
+                  value: residentTax,
+                  setter: setResidentTax,
+                  hint: "前年の所得に対して一律10% ＋ 均等割（年5,000円）"
+                },
+                {
+                  label: "個人事業税",
+                  value: businessTax,
+                  setter: setBusinessTax,
+                  hint: "事業所得が290万円を超えた場合にのみ発生します。 税率：5%"
+                },
+                {
+                  label: "消費税",
+                  value: consumptionTax,
+                  setter: setConsumptionTax,
+                  hint: "インボイス登録者のみ対象。売上の10%預かりから、「2割特例」などを適用して計算。"
+                },
+              ].map((item) => (
+                <div key={item.label}>
+                  <div className="mb-2">
+                    <label className="text-sm font-medium text-slate-600 flex items-center gap-1.5">
+                      {item.label}
+                      <Tooltip text={item.hint}>
+                        <svg className="w-4 h-4 text-slate-400 hover:text-slate-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <circle cx="12" cy="12" r="10" strokeWidth="2" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 16v-4m0-4h.01" />
+                        </svg>
+                      </Tooltip>
+                    </label>
                   </div>
                   <input
-                    type="range"
-                    min="0"
-                    max="68000"
-                    step="1000"
-                    value={Number(idecoMonthly)}
-                    onChange={(e) => setIdecoMonthly(Number(e.target.value))}
-                    className="w-full h-6 bg-indigo-200 rounded-lg appearance-none cursor-pointer accent-indigo-600 mb-3"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={item.value}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (/^\d*$/.test(val)) item.setter(val);
+                    }}
+                    className="w-full px-4 py-2.5 text-right font-mono bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                    placeholder="0"
                   />
-                  <div className="flex justify-end">
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      value={idecoMonthly}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (/^\d*$/.test(val)) {
-                          setIdecoMonthly(val === "" ? "" : Number(val));
-                        }
-                      }}
-                      className="w-28 p-2 border border-indigo-200 rounded text-right font-mono text-base bg-white"
-                    />
-                  </div>
                 </div>
+              ))}
 
-                {/* Kyosai */}
-                <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <label className="text-sm font-medium text-slate-700">小規模企業共済</label>
-                    <span className="text-xs bg-indigo-200 text-indigo-800 px-2 py-0.5 rounded-full">最大70,000</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="70000"
-                    step="1000"
-                    value={Number(kyosaiMonthly)}
-                    onChange={(e) => setKyosaiMonthly(Number(e.target.value))}
-                    className="w-full h-6 bg-indigo-200 rounded-lg appearance-none cursor-pointer accent-indigo-600 mb-3"
-                  />
-                  <div className="flex justify-end">
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      value={kyosaiMonthly}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (/^\d*$/.test(val)) {
-                          setKyosaiMonthly(val === "" ? "" : Number(val));
-                        }
-                      }}
-                      className="w-28 p-2 border border-indigo-200 rounded text-right font-mono text-base bg-white"
-                    />
-                  </div>
-                </div>
+
+              <div className="pt-3 border-t border-slate-200 flex justify-between items-center">
+                <span className="text-sm text-slate-600">積立合計</span>
+                <span className="text-sm font-semibold text-slate-900">
+                  {fmt(Number(incomeTax) + Number(residentTax) + Number(businessTax) + Number(consumptionTax))}
+                </span>
               </div>
-            )}
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Sticky Footer for Mobile */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 p-3 shadow-2xl lg:hidden z-50">
-        <div className="grid grid-cols-2 gap-4 items-end max-w-lg mx-auto">
-          <div className="text-left">
-            <p className="text-[10px] text-slate-500 mb-1">月商 (売上)</p>
-            <p className="text-xl font-bold text-slate-700 leading-none">{fmt(result.monthlyGrossSales)}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-[10px] text-slate-500 mb-1">本当の手取り</p>
-            <p className="text-2xl font-bold text-emerald-600 leading-none">{fmt(result.realTakeHome)}</p>
+          {/* Savings */}
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold text-slate-900">オススメの節税</h2>
+            </div>
+
+            <div className="grid grid-cols-1 gap-6">
+              {/* iDeCo */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium text-slate-600">iDeCo</label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-500">最大68,000</span>
+                    <span className="text-sm font-semibold text-slate-900">{fmt(Number(idecoMonthly))}</span>
+                  </div>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="68000"
+                  step="1000"
+                  value={Number(idecoMonthly)}
+                  onChange={(e) => setIdecoMonthly(e.target.value)}
+                  className="w-full h-2.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-indigo-600 mb-3"
+                />
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={idecoMonthly}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (/^\d*$/.test(val)) setIdecoMonthly(val);
+                  }}
+                  className="w-full px-4 py-2.5 text-right font-mono bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                />
+              </div>
+
+              {/* Kyosai */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium text-slate-600">小規模企業共済</label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-500">最大70,000</span>
+                    <span className="text-sm font-semibold text-slate-900">{fmt(Number(kyosaiMonthly))}</span>
+                  </div>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="70000"
+                  step="1000"
+                  value={Number(kyosaiMonthly)}
+                  onChange={(e) => setKyosaiMonthly(e.target.value)}
+                  className="w-full h-2.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-indigo-600 mb-3"
+                />
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={kyosaiMonthly}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (/^\d*$/.test(val)) setKyosaiMonthly(val);
+                  }}
+                  className="w-full px-4 py-2.5 text-right font-mono bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                />
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* Mobile Sticky Footer */}
+        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 p-4 shadow-2xl lg:hidden z-50">
+          <div className="grid grid-cols-2 gap-4 max-w-lg mx-auto">
+            <div>
+              <p className="text-xs text-slate-500 mb-1">月商</p>
+              <p className="text-xl font-bold text-slate-900">{fmt(result.monthlyGrossSales)}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-slate-500 mb-1">本当の手取り</p>
+              <p className="text-xl font-bold text-emerald-600">{fmt(result.realTakeHome)}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Padding for Mobile */}
+        <div className="h-24 lg:hidden"></div>
       </div>
     </div>
   );
 }
-
-
