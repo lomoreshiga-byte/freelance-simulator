@@ -209,11 +209,11 @@ export default function GeneralSimulator() {
                     </div>
                     <div className="flex flex-row justify-between w-full md:w-auto gap-4 md:gap-12">
                         <div className="text-left md:text-right">
-                            <p className="text-[10px] md:text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">真の月間手取り</p>
+                            <p className="text-[10px] md:text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">月間手取り</p>
                             <p className="text-2xl md:text-4xl lg:text-5xl font-bold text-emerald-400">¥{format(result.monthlyTakeHome)}</p>
                         </div>
                         <div className="text-right">
-                            <p className="text-[10px] md:text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">年間の手残り</p>
+                            <p className="text-[10px] md:text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">年間手取り</p>
                             <p className="text-2xl md:text-4xl lg:text-5xl font-bold text-emerald-400">¥{format(result.yearlyTakeHome)}</p>
                         </div>
                     </div>
