@@ -204,8 +204,8 @@ export default function GeneralSimulator() {
             <Card className="p-8 mb-8 bg-slate-900 border-none text-white overflow-hidden relative">
                 <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight mb-2">Freelance Tax & Cashflow</h1>
-                        <p className="text-slate-400">業種を問わず、あなたの「真の手取り」を可視化します</p>
+                        <h1 className="text-3xl font-bold tracking-tight mb-2">のこるくん</h1>
+                        <p className="text-slate-400">個人事業主の為の手取りシミュレーター</p>
                     </div>
                     <div className="flex gap-4 md:gap-12">
                         <div className="text-center md:text-right">

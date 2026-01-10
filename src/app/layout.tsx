@@ -9,8 +9,8 @@ const mPlusRounded1c = M_PLUS_Rounded_1c({
 });
 
 export const metadata: Metadata = {
-  title: "生活防衛資金シミュレーター",
-  description: "Freelance Lifestyle Defense Fund Simulator",
+  title: "のこるくん | 個人事業主の為の手取りシミュレーター",
+  description: "全業種対応の個人事業主専用手取りシミュレーター。税金・社保を引いた「本当に残るお金」を即座に計算します。",
 };
 
 export default function RootLayout({
