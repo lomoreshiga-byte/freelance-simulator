@@ -338,17 +338,17 @@ export default function FreelanceSimulator() {
               <div className="h-2 bg-slate-100 rounded-full overflow-hidden flex">
                 <div
                   className="bg-emerald-600 transition-all duration-500"
-                  style={{ width: `${Math.max(0, Math.min(100, (result.realTakeHome / result.monthlyGrossSales) * 100))}%` }}
+                  style={{ width: `${result.monthlyGrossSales > 0 ? Math.max(0, Math.min(100, (result.realTakeHome / result.monthlyGrossSales) * 100)) : 0}%` }}
                   title="手取り"
                 />
                 <div
                   className="bg-amber-500 transition-all duration-500"
-                  style={{ width: `${Math.max(0, Math.min(100, (result.totalMonthlyExpenses / result.monthlyGrossSales) * 100))}%` }}
+                  style={{ width: `${result.monthlyGrossSales > 0 ? Math.max(0, Math.min(100, (result.totalMonthlyExpenses / result.monthlyGrossSales) * 100)) : 0}%` }}
                   title="経費"
                 />
                 <div
                   className="bg-rose-600 transition-all duration-500"
-                  style={{ width: `${Math.max(0, Math.min(100, (result.monthlyTaxPool / result.monthlyGrossSales) * 100))}%` }}
+                  style={{ width: `${result.monthlyGrossSales > 0 ? Math.max(0, Math.min(100, (result.monthlyTaxPool / result.monthlyGrossSales) * 100)) : 0}%` }}
                   title="税金"
                 />
               </div>
@@ -474,30 +474,32 @@ export default function FreelanceSimulator() {
                 <>
                   <div className="pt-3 border-t border-slate-200"></div>
                   {customExpenses.map((expense, index) => (
-                    <div key={index} className="flex items-center gap-3">
-                      <label className="text-sm font-medium text-slate-600 min-w-[100px]">{expense.name}</label>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        value={expense.amount}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (/^\d*$/.test(val)) updateCustomExpense(index, val);
-                        }}
-                        className="flex-1 px-3 py-2 text-right font-mono text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                        placeholder="0"
-                      />
-                      <span className="text-sm text-slate-500">円</span>
-                      <button
-                        onClick={() => removeCustomExpense(index)}
-                        className="text-slate-400 hover:text-red-600 transition-colors p-1"
-                        title="削除"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
+                    <div key={index} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                      <label className="text-sm font-medium text-slate-600 sm:min-w-[100px]">{expense.name}</label>
+                      <div className="flex items-center gap-2 w-full sm:flex-1">
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          value={expense.amount}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (/^\d*$/.test(val)) updateCustomExpense(index, val);
+                          }}
+                          className="flex-1 px-3 py-2 text-right font-mono text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                          placeholder="0"
+                        />
+                        <span className="text-sm text-slate-500">円</span>
+                        <button
+                          onClick={() => removeCustomExpense(index)}
+                          className="text-slate-400 hover:text-red-600 transition-colors p-1"
+                          title="削除"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </>
@@ -505,33 +507,35 @@ export default function FreelanceSimulator() {
 
               {/* Add New Expense Form */}
               <div className="pt-3 border-t border-slate-200">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="text"
                     value={newExpenseName}
                     onChange={(e) => setNewExpenseName(e.target.value)}
                     placeholder="項目名"
-                    className="w-32 px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                    className="w-full sm:w-32 px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
                   />
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    value={newExpenseAmount}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (/^\d*$/.test(val)) setNewExpenseAmount(val);
-                    }}
-                    placeholder="金額"
-                    className="flex-1 px-3 py-2 text-right font-mono text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                  />
-                  <span className="text-sm text-slate-500">円</span>
-                  <button
-                    onClick={addCustomExpense}
-                    className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors whitespace-nowrap"
-                  >
-                    + 追加
-                  </button>
+                  <div className="flex items-center gap-2 w-full sm:flex-1">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={newExpenseAmount}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (/^\d*$/.test(val)) setNewExpenseAmount(val);
+                      }}
+                      placeholder="金額"
+                      className="flex-1 px-3 py-2 text-right font-mono text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                    />
+                    <span className="text-sm text-slate-500">円</span>
+                    <button
+                      onClick={addCustomExpense}
+                      className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors whitespace-nowrap"
+                    >
+                      + 追加
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -556,30 +560,32 @@ export default function FreelanceSimulator() {
               {annualCustomExpenses.length > 0 && (
                 <>
                   {annualCustomExpenses.map((expense, index) => (
-                    <div key={index} className="flex items-center gap-3">
-                      <label className="text-sm font-medium text-slate-600 min-w-[100px]">{expense.name}</label>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        value={expense.amount}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (/^\d*$/.test(val)) updateAnnualExpense(index, val);
-                        }}
-                        className="flex-1 px-3 py-2 text-right font-mono text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                        placeholder="0"
-                      />
-                      <span className="text-sm text-slate-500">円</span>
-                      <button
-                        onClick={() => removeAnnualExpense(index)}
-                        className="text-slate-400 hover:text-red-600 transition-colors p-1"
-                        title="削除"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
+                    <div key={index} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                      <label className="text-sm font-medium text-slate-600 sm:min-w-[100px]">{expense.name}</label>
+                      <div className="flex items-center gap-2 w-full sm:flex-1">
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          value={expense.amount}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (/^\d*$/.test(val)) updateAnnualExpense(index, val);
+                          }}
+                          className="flex-1 px-3 py-2 text-right font-mono text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                          placeholder="0"
+                        />
+                        <span className="text-sm text-slate-500">円</span>
+                        <button
+                          onClick={() => removeAnnualExpense(index)}
+                          className="text-slate-400 hover:text-red-600 transition-colors p-1"
+                          title="削除"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   ))}
                   <div className="pt-3 border-t border-slate-200"></div>
@@ -588,33 +594,35 @@ export default function FreelanceSimulator() {
 
               {/* Add New Annual Expense Form */}
               <div className="">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="text"
                     value={newAnnualExpenseName}
                     onChange={(e) => setNewAnnualExpenseName(e.target.value)}
                     placeholder="項目名"
-                    className="w-32 px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                    className="w-full sm:w-32 px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
                   />
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    value={newAnnualExpenseAmount}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (/^\d*$/.test(val)) setNewAnnualExpenseAmount(val);
-                    }}
-                    placeholder="金額"
-                    className="flex-1 px-3 py-2 text-right font-mono text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                  />
-                  <span className="text-sm text-slate-500">円</span>
-                  <button
-                    onClick={addAnnualExpense}
-                    className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors whitespace-nowrap"
-                  >
-                    + 追加
-                  </button>
+                  <div className="flex items-center gap-2 w-full sm:flex-1">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={newAnnualExpenseAmount}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (/^\d*$/.test(val)) setNewAnnualExpenseAmount(val);
+                      }}
+                      placeholder="金額"
+                      className="flex-1 px-3 py-2 text-right font-mono text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                    />
+                    <span className="text-sm text-slate-500">円</span>
+                    <button
+                      onClick={addAnnualExpense}
+                      className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors whitespace-nowrap"
+                    >
+                      + 追加
+                    </button>
+                  </div>
                 </div>
               </div>
 
