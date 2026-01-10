@@ -143,8 +143,10 @@ export default function GeneralSimulator() {
         const residentTaxToUse = manualResidentTax !== null ? manualResidentTax * 12 : (taxableIncome * 0.10 + 5000);
 
         // Business Tax
+        // 課税標準額 = (事業所得 + 青色申告特別控除) - 事業主控除290万円
         const category = BUSINESS_CATEGORIES.find(c => c.id === businessType);
-        const businessTaxBase = Math.max(0, businessProfit - 2900000); // 2.9M fixed deduction
+        const businessProfitBeforeDeduction = businessProfit; // すでに yearlyRevenue - yearlyExpenses
+        const businessTaxBase = Math.max(0, businessProfitBeforeDeduction - 2900000);
         const calculatedBusTax = businessTaxBase * (category?.taxRate || 0);
         const busTaxToUse = manualBusinessTax !== null ? manualBusinessTax * 12 : calculatedBusTax;
 
