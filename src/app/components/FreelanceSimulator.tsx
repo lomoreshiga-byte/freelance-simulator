@@ -286,9 +286,9 @@ export default function FreelanceSimulator() {
 
         {/* Header */}
         <header className="mb-8">
-          <div className="flex items-start justify-between mb-2">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div>
-              <h1 className="text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight leading-tight">
                 個人事業主お金シミュレーター
               </h1>
               <p className="text-slate-600 text-sm lg:text-base mt-2">
@@ -297,7 +297,7 @@ export default function FreelanceSimulator() {
             </div>
             <button
               onClick={resetAllData}
-              className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:text-red-600 hover:border-red-300 transition-colors"
+              className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:text-red-600 hover:border-red-300 transition-colors"
             >
               リセット
             </button>
@@ -308,25 +308,25 @@ export default function FreelanceSimulator() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
 
           {/* Monthly Revenue Card */}
-          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 lg:p-8">
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4 sm:p-6 lg:p-8">
             <div className="mb-4">
               <h3 className="text-sm font-medium text-slate-600">月商（売上）</h3>
             </div>
-            <div className="text-4xl lg:text-5xl font-bold text-slate-900 mb-2">
+            <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-2 break-all">
               {fmt(result.monthlyGrossSales)}
             </div>
             <p className="text-sm text-slate-500">年間売上: {fmt(result.annualSales)}</p>
           </div>
 
           {/* Real Take Home Card */}
-          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 lg:p-8">
-            <div className="flex items-center justify-between mb-4">
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4 sm:p-6 lg:p-8">
+            <div className="flex items-center justify-between mb-4 gap-2">
               <h3 className="text-sm font-medium text-slate-600">本当の手取り</h3>
-              <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+              <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full whitespace-nowrap">
                 {revenuePercentage}%
               </span>
             </div>
-            <div className="text-4xl lg:text-5xl font-bold text-emerald-700 mb-6">
+            <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-emerald-700 mb-6 break-all">
               {fmt(result.realTakeHome)}
             </div>
 
@@ -374,7 +374,7 @@ export default function FreelanceSimulator() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
 
           {/* Income Settings */}
-          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4 sm:p-6">
             <div className="mb-6">
               <h2 className="text-lg font-semibold text-slate-900">収入・稼働設定</h2>
             </div>
@@ -438,7 +438,7 @@ export default function FreelanceSimulator() {
           </div>
 
           {/* Fixed Expenses */}
-          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4 sm:p-6">
             <div className="mb-6">
               <h2 className="text-lg font-semibold text-slate-900">固定経費（月額）</h2>
             </div>
@@ -451,21 +451,23 @@ export default function FreelanceSimulator() {
                 { label: "車両保険", value: vehicleInsurance, setter: setVehicleInsurance },
                 { label: "地図アプリ", value: mapApp, setter: setMapApp },
               ].map((item) => (
-                <div key={item.label} className="flex items-center gap-3">
-                  <label className="text-sm font-medium text-slate-600 min-w-[100px]">{item.label}</label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    value={item.value}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (/^\d*$/.test(val)) item.setter(val);
-                    }}
-                    className="flex-1 px-3 py-2 text-right font-mono text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                    placeholder="0"
-                  />
-                  <span className="text-sm text-slate-500">円</span>
+                <div key={item.label} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                  <label className="text-sm font-medium text-slate-600 sm:min-w-[100px]">{item.label}</label>
+                  <div className="flex items-center gap-2 flex-1">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={item.value}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (/^\d*$/.test(val)) item.setter(val);
+                      }}
+                      className="flex-1 min-w-0 px-3 py-2 text-right font-mono text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                      placeholder="0"
+                    />
+                    <span className="text-sm text-slate-500 whitespace-nowrap">円</span>
+                  </div>
                 </div>
               ))}
 
@@ -476,7 +478,7 @@ export default function FreelanceSimulator() {
                   {customExpenses.map((expense, index) => (
                     <div key={index} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                       <label className="text-sm font-medium text-slate-600 sm:min-w-[100px]">{expense.name}</label>
-                      <div className="flex items-center gap-2 w-full sm:flex-1">
+                      <div className="flex items-center gap-2 flex-1">
                         <input
                           type="text"
                           inputMode="numeric"
@@ -486,10 +488,10 @@ export default function FreelanceSimulator() {
                             const val = e.target.value;
                             if (/^\d*$/.test(val)) updateCustomExpense(index, val);
                           }}
-                          className="flex-1 px-3 py-2 text-right font-mono text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                          className="flex-1 min-w-0 px-3 py-2 text-right font-mono text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
                           placeholder="0"
                         />
-                        <span className="text-sm text-slate-500">円</span>
+                        <span className="text-sm text-slate-500 whitespace-nowrap">円</span>
                         <button
                           onClick={() => removeCustomExpense(index)}
                           className="text-slate-400 hover:text-red-600 transition-colors p-1"
@@ -547,7 +549,7 @@ export default function FreelanceSimulator() {
           </div>
 
           {/* Annual Expenses */}
-          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4 sm:p-6">
             <div className="mb-6">
               <h2 className="text-lg font-semibold text-slate-900">年間経費（年払い）</h2>
               <p className="text-sm text-slate-500 mt-1">
@@ -562,7 +564,7 @@ export default function FreelanceSimulator() {
                   {annualCustomExpenses.map((expense, index) => (
                     <div key={index} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                       <label className="text-sm font-medium text-slate-600 sm:min-w-[100px]">{expense.name}</label>
-                      <div className="flex items-center gap-2 w-full sm:flex-1">
+                      <div className="flex items-center gap-2 flex-1">
                         <input
                           type="text"
                           inputMode="numeric"
@@ -572,10 +574,10 @@ export default function FreelanceSimulator() {
                             const val = e.target.value;
                             if (/^\d*$/.test(val)) updateAnnualExpense(index, val);
                           }}
-                          className="flex-1 px-3 py-2 text-right font-mono text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                          className="flex-1 min-w-0 px-3 py-2 text-right font-mono text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
                           placeholder="0"
                         />
-                        <span className="text-sm text-slate-500">円</span>
+                        <span className="text-sm text-slate-500 whitespace-nowrap">円</span>
                         <button
                           onClick={() => removeAnnualExpense(index)}
                           className="text-slate-400 hover:text-red-600 transition-colors p-1"
@@ -637,7 +639,7 @@ export default function FreelanceSimulator() {
           </div>
 
           {/* Social Insurance */}
-          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4 sm:p-6">
             <div className="mb-6">
               <h2 className="text-lg font-semibold text-slate-900">社会保険（毎月の支払い）</h2>
             </div>
@@ -691,7 +693,7 @@ export default function FreelanceSimulator() {
           </div>
 
           {/* Tax Reserve */}
-          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4 sm:p-6">
             <div className="mb-6">
               <h2 className="text-lg font-semibold text-slate-900">税金の積立(翌年の支払い用)</h2>
             </div>
@@ -761,7 +763,7 @@ export default function FreelanceSimulator() {
           </div>
 
           {/* Savings */}
-          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4 sm:p-6">
             <div className="mb-6">
               <h2 className="text-lg font-semibold text-slate-900">オススメの節税</h2>
             </div>
