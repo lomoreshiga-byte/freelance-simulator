@@ -286,21 +286,25 @@ export default function FreelanceSimulator() {
 
         {/* Header */}
         <header className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight leading-tight">
-                個人事業主お金シミュレーター
-              </h1>
-              <p className="text-slate-600 text-sm lg:text-base mt-2">
-                税金・経費を引いた&quot;真の手取り&quot;を即座に計算
-              </p>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight leading-tight">
+                  個人事業主お金シミュレーター
+                </h1>
+                <p className="text-slate-600 text-sm lg:text-base mt-2">
+                  税金・経費を引いた&quot;真の手取り&quot;を即座に計算
+                </p>
+              </div>
             </div>
-            <button
-              onClick={resetAllData}
-              className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:text-red-600 hover:border-red-300 transition-colors"
-            >
-              リセット
-            </button>
+            <div className="flex justify-end sm:justify-start">
+              <button
+                onClick={resetAllData}
+                className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:text-red-600 hover:border-red-300 transition-colors whitespace-nowrap"
+              >
+                リセット
+              </button>
+            </div>
           </div>
         </header>
 
