@@ -82,7 +82,7 @@ export default function GeneralSimulator() {
 
     // Expenses
     const [expenseMode, setExpenseMode] = useState<"percentage" | "detail">("percentage");
-    const [expensePercentage, setExpensePercentage] = useState(20);
+    const [expensePercentage, setExpensePercentage] = useState(0);
     const [detailedExpenses, setDetailedExpenses] = useState<ExpenseItem[]>([]);
     const [newExpName, setNewExpName] = useState("");
     const [newExpAmount, setNewExpAmount] = useState("");
@@ -120,7 +120,7 @@ export default function GeneralSimulator() {
         // Social Insurance (Estimate)
         // Roughly 10-14% of profit for Health + Pension (Fixed roughly in JP for simplistic estimation here, then allow manual)
         const estimatedHealth = Math.min(900000, profitAfterBlue * 0.1);
-        const estimatedPension = 16980 * 12; // Standard National Pension
+        const estimatedPension = yearlyRevenue > 0 ? 16980 * 12 : 0; // Standard National Pension
 
         const healthToUse = manualHealth !== null ? manualHealth * 12 : estimatedHealth;
         const pensionToUse = manualPension !== null ? manualPension * 12 : estimatedPension;
@@ -140,7 +140,7 @@ export default function GeneralSimulator() {
         const incomeTaxToUse = manualIncomeTax !== null ? manualIncomeTax * 12 : calculatedIncomeTax;
 
         // Resident Tax (10% flat + 5000)
-        const residentTaxToUse = manualResidentTax !== null ? manualResidentTax * 12 : (taxableIncome * 0.10 + 5000);
+        const residentTaxToUse = manualResidentTax !== null ? manualResidentTax * 12 : (yearlyRevenue > 0 ? (taxableIncome * 0.10 + 5000) : 0);
 
         // Business Tax
         // 課税標準額 = (事業所得 + 青色申告特別控除) - 事業主控除290万円
