@@ -76,7 +76,7 @@ const Tooltip = ({ text, children }: { text: string; children: React.ReactNode }
 export default function GeneralSimulator() {
     // --- States ---
     const [revenueMode, setRevenueMode] = useState<"monthly" | "yearly">("monthly");
-    const [revenue, setRevenue] = useState<number>(500000);
+    const [revenue, setRevenue] = useState<number>(0);
     const [businessType, setBusinessType] = useState<BusinessType>("type1");
     const [blueTaxReturn, setBlueTaxReturn] = useState(true); // 65万円控除
 
