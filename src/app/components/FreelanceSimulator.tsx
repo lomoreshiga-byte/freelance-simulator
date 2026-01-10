@@ -290,11 +290,8 @@ export default function FreelanceSimulator() {
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight leading-tight">
-                  個人事業主お金シミュレーター
+                  配送業手取り計算機
                 </h1>
-                <p className="text-slate-600 text-sm lg:text-base mt-2">
-                  税金・経費を引いた&quot;真の手取り&quot;を即座に計算
-                </p>
               </div>
             </div>
             <div className="flex justify-end sm:justify-start">
