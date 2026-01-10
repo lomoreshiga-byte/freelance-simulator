@@ -203,18 +203,18 @@ export default function GeneralSimulator() {
             {/* Header Bento Card */}
             <Card className="p-8 mb-8 bg-slate-900 border-none text-white overflow-hidden relative">
                 <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight mb-2 text-black">のこるくん</h1>
-                        <p className="text-slate-400">個人事業主の為の手取りシミュレーター</p>
+                    <div className="w-full md:w-auto">
+                        <h1 className="text-4xl md:text-3xl font-bold tracking-tight mb-2 text-black">のこるくん</h1>
+                        <p className="text-slate-400 text-sm md:text-base">個人事業主の為の手取りシミュレーター</p>
                     </div>
-                    <div className="flex gap-4 md:gap-12">
-                        <div className="text-center md:text-right">
-                            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">真の月間手取り</p>
-                            <p className="text-4xl md:text-5xl font-bold text-emerald-400">¥{format(result.monthlyTakeHome)}</p>
+                    <div className="flex flex-row justify-between w-full md:w-auto gap-4 md:gap-12">
+                        <div className="text-left md:text-right">
+                            <p className="text-[10px] md:text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">真の月間手取り</p>
+                            <p className="text-2xl md:text-4xl lg:text-5xl font-bold text-emerald-400">¥{format(result.monthlyTakeHome)}</p>
                         </div>
-                        <div className="text-center md:text-right">
-                            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">年間の手残り</p>
-                            <p className="text-4xl md:text-5xl font-bold text-emerald-400">¥{format(result.yearlyTakeHome)}</p>
+                        <div className="text-right">
+                            <p className="text-[10px] md:text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">年間の手残り</p>
+                            <p className="text-2xl md:text-4xl lg:text-5xl font-bold text-emerald-400">¥{format(result.yearlyTakeHome)}</p>
                         </div>
                     </div>
                 </div>
