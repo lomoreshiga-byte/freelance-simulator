@@ -349,18 +349,18 @@ export default function GeneralSimulator() {
                                         </div>
                                     ))}
                                 </div>
-                                <div className="flex gap-2">
+                                <div className="flex flex-wrap gap-2">
                                     <input
                                         placeholder="費目（地代家賃など）"
-                                        className="flex-1 px-4 py-2 text-sm bg-white border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-amber-500"
+                                        className="flex-1 min-w-[150px] px-4 py-2 text-sm bg-white border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-amber-500"
                                         value={newExpName} onChange={(e) => setNewExpName(e.target.value)}
                                     />
                                     <input
                                         type="number" placeholder="金額/月"
-                                        className="w-32 px-4 py-2 text-sm bg-white border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 text-right font-mono"
+                                        className="flex-1 min-w-[100px] md:w-32 px-4 py-2 text-sm bg-white border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 text-right font-mono"
                                         value={newExpAmount} onChange={(e) => setNewExpAmount(e.target.value)}
                                     />
-                                    <button onClick={addExpense} className="px-6 py-2 bg-slate-900 text-white rounded-lg text-sm font-bold hover:bg-slate-800 transition-colors whitespace-nowrap">+ 追加</button>
+                                    <button onClick={addExpense} className="w-full sm:w-auto px-6 py-2 bg-slate-900 text-white rounded-lg text-sm font-bold hover:bg-slate-800 transition-colors whitespace-nowrap">+ 追加</button>
                                 </div>
                             </div>
                         )}

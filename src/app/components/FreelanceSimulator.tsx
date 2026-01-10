@@ -502,30 +502,32 @@ export default function FreelanceSimulator() {
 
               {/* Add New Expense Form */}
               <div className="pt-3 border-t border-slate-200">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <input
                     type="text"
                     value={newExpenseName}
                     onChange={(e) => setNewExpenseName(e.target.value)}
                     placeholder="項目名"
-                    className="w-32 px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                    className="flex-1 min-w-[120px] px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
                   />
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    value={newExpenseAmount}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (/^\d*$/.test(val)) setNewExpenseAmount(val);
-                    }}
-                    placeholder="金額"
-                    className="flex-1 px-3 py-2 text-right font-mono text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                  />
-                  <span className="text-sm text-slate-500">円</span>
+                  <div className="flex-1 flex items-center gap-1 min-w-[120px]">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={newExpenseAmount}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (/^\d*$/.test(val)) setNewExpenseAmount(val);
+                      }}
+                      placeholder="金額"
+                      className="w-full px-3 py-2 text-right font-mono text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                    />
+                    <span className="text-sm text-slate-500">円</span>
+                  </div>
                   <button
                     onClick={addCustomExpense}
-                    className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors whitespace-nowrap"
+                    className="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors whitespace-nowrap"
                   >
                     + 追加
                   </button>
@@ -585,30 +587,32 @@ export default function FreelanceSimulator() {
 
               {/* Add New Annual Expense Form */}
               <div className="">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <input
                     type="text"
                     value={newAnnualExpenseName}
                     onChange={(e) => setNewAnnualExpenseName(e.target.value)}
                     placeholder="項目名"
-                    className="w-32 px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                    className="flex-1 min-w-[120px] px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
                   />
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    value={newAnnualExpenseAmount}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (/^\d*$/.test(val)) setNewAnnualExpenseAmount(val);
-                    }}
-                    placeholder="金額"
-                    className="flex-1 px-3 py-2 text-right font-mono text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                  />
-                  <span className="text-sm text-slate-500">円</span>
+                  <div className="flex-1 flex items-center gap-1 min-w-[120px]">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={newAnnualExpenseAmount}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (/^\d*$/.test(val)) setNewAnnualExpenseAmount(val);
+                      }}
+                      placeholder="金額"
+                      className="w-full px-3 py-2 text-right font-mono text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                    />
+                    <span className="text-sm text-slate-500">円</span>
+                  </div>
                   <button
                     onClick={addAnnualExpense}
-                    className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors whitespace-nowrap"
+                    className="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors whitespace-nowrap"
                   >
                     + 追加
                   </button>
