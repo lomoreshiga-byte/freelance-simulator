@@ -286,15 +286,15 @@ export default function FreelanceSimulator() {
 
         {/* Header */}
         <header className="mb-8">
-          <div className="flex items-start justify-between mb-2">
+          <div className="flex items-center justify-between mb-2 gap-2">
             <div>
-              <h1 className="text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight">
+              <h1 className="text-xl sm:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight">
                 配送業手取り計算機
               </h1>
             </div>
             <button
               onClick={resetAllData}
-              className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:text-red-600 hover:border-red-300 transition-colors"
+              className="whitespace-nowrap px-3 py-2 sm:px-4 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:text-red-600 hover:border-red-300 transition-colors"
             >
               リセット
             </button>
