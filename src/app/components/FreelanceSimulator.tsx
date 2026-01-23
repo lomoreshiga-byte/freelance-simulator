@@ -518,7 +518,7 @@ export default function FreelanceSimulator() {
                     records={dailyRecords}
                     onUpdateRecord={handleUpdateRecord}
                     onDeleteRecord={handleDeleteRecord}
-                    defaultUnitPrice={Number(unitPrice) || 150}
+                    defaultUnitPrice={Number(unitPrice) || 130}
                     year={viewYear}
                     month={viewMonth}
                     onMonthChange={(y, m) => {
