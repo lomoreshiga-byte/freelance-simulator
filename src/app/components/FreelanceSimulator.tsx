@@ -1043,11 +1043,8 @@ export default function FreelanceSimulator() {
           </div>
         </div>
 
-        {/* Bottom Padding for Mobile */}
-        <div className="h-24 lg:hidden"></div>
-
         {/* Footer / Info */}
-        <div className="mt-8 mb-12 text-center text-slate-400">
+        <div className="mt-4 pb-24 lg:pb-8 text-center text-slate-400">
           <p className="text-[10px] font-medium max-w-2xl mx-auto leading-relaxed">
             ※本シミュレーターは概算値であり、正確な税額を保証するものではありません。実際の確定申告や納税に関しては、お住まいの自治体や税務署、税理士にご相談ください。
           </p>
