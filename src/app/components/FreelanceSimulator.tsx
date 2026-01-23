@@ -225,7 +225,7 @@ export default function FreelanceSimulator() {
     const monthlySalesFromRecords = (() => {
       let total = 0;
       const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-      const defaultUnit = Number(unitPrice) || 0;
+      const defaultUnit = Number(unitPrice) || 130;
 
       for (let d = 1; d <= daysInMonth; d++) {
         const dateKey = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
