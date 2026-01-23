@@ -16,6 +16,9 @@ interface DailyReportProps {
     onUpdateRecord: (record: DailyRecord) => void;
     onDeleteRecord: (date: string) => void;
     defaultUnitPrice: number;
+    year: number;
+    month: number;
+    onMonthChange: (year: number, month: number) => void;
 }
 
 // --- Helper Functions ---
@@ -31,8 +34,8 @@ function formatDate(year: number, month: number, day: number) {
     return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
-export default function DailyReport({ records, onUpdateRecord, onDeleteRecord, defaultUnitPrice }: DailyReportProps) {
-    const [currentDate, setCurrentDate] = useState(new Date());
+export default function DailyReport({ records, onUpdateRecord, onDeleteRecord, defaultUnitPrice, year, month, onMonthChange }: DailyReportProps) {
+    // const [currentDate, setCurrentDate] = useState(new Date()); // Removed internal state
     const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
     // Edit Form State
@@ -40,8 +43,8 @@ export default function DailyReport({ records, onUpdateRecord, onDeleteRecord, d
     const [editUnitPrice, setEditUnitPrice] = useState("");
     const [editNote, setEditNote] = useState("");
 
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth(); // 0-indexed
+    // const year = currentDate.getFullYear();
+    // const month = currentDate.getMonth(); // 0-indexed
 
     const daysInMonth = getDaysInMonth(year, month);
     const firstDay = getFirstDayOfMonth(year, month);
@@ -65,11 +68,15 @@ export default function DailyReport({ records, onUpdateRecord, onDeleteRecord, d
     }, [records, year, month, daysInMonth, defaultUnitPrice]);
 
     const handlePrevMonth = () => {
-        setCurrentDate(new Date(year, month - 1, 1));
+        // setCurrentDate(new Date(year, month - 1, 1));
+        if (month === 0) onMonthChange(year - 1, 11);
+        else onMonthChange(year, month - 1);
     };
 
     const handleNextMonth = () => {
-        setCurrentDate(new Date(year, month + 1, 1));
+        // setCurrentDate(new Date(year, month + 1, 1));
+        if (month === 11) onMonthChange(year + 1, 0);
+        else onMonthChange(year, month + 1);
     };
 
     const handleDateClick = (day: number) => {

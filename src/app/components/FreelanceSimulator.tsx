@@ -28,6 +28,7 @@ interface ScenarioInputs {
   unitPrice: number;
   deliveryCount: number;
   dailyRecords: Record<string, DailyRecord>;
+  monthlySalesOverride?: number;
 }
 
 function calculateFreelanceScenario(inputs: ScenarioInputs) {
@@ -35,14 +36,15 @@ function calculateFreelanceScenario(inputs: ScenarioInputs) {
     dailyRate, workDays, commissionRate, businessGuarantee, cargoInsurance,
     vehicleRental, vehicleInsurance, mapApp, customExpensesTotal, annualCustomExpensesTotal,
     incomeTax, residentTax, healthInsurance, pension, businessTax, consumptionTax,
-    idecoMonthly, kyosaiMonthly
+    idecoMonthly, kyosaiMonthly, monthlySalesOverride
   } = inputs;
 
   const annualExpensesMonthlyBuffer = annualCustomExpensesTotal / 12;
 
-
   let annualSales = 0;
-  if (inputs.calculationMode === "piece") {
+  if (monthlySalesOverride !== undefined) {
+    annualSales = monthlySalesOverride * 12; // Assuming the monthly records repeat for the year for projection
+  } else if (inputs.calculationMode === "piece") {
     // Piece rate: Unit Price * Count * Work Days * 12
     annualSales = (inputs.unitPrice || 0) * (inputs.deliveryCount || 0) * workDays * 12;
   } else if (inputs.calculationMode === "daily_report") {
@@ -133,6 +135,10 @@ export default function FreelanceSimulator() {
   const [dailyRate, setDailyRate] = useState<string>("");
   const [workDays, setWorkDays] = useState<string>("");
 
+  // Daily Report State
+  const [viewYear, setViewYear] = useState(new Date().getFullYear());
+  const [viewMonth, setViewMonth] = useState(new Date().getMonth());
+
   const [dailyRecords, setDailyRecords] = useState<Record<string, DailyRecord>>({});
   const [commissionRate, setCommissionRate] = useState<string>("");
   const [businessGuarantee, setBusinessGuarantee] = useState<string>("");
@@ -214,11 +220,47 @@ export default function FreelanceSimulator() {
     const customExpensesTotal = customExpenses.reduce((sum, item) => sum + Number(item.amount), 0);
     const annualCustomExpensesTotal = annualCustomExpenses.reduce((sum, item) => sum + Number(item.amount), 0);
 
+    // Calculate Monthly Sales for Daily Report Mode
+    // Logic: Sum of the currently viewed month's records
+    const monthlySalesFromRecords = (() => {
+      let total = 0;
+      const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+      const defaultUnit = Number(unitPrice) || 0;
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dateKey = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+        const record = dailyRecords[dateKey];
+        if (record) {
+          total += record.count * (record.unitPrice ?? defaultUnit);
+        }
+      }
+      return total;
+    })();
+
+    // Override logic inside calculateFreelanceScenario or wrapping it?
+    // The calculateFreelanceScenario function calculates annualSales based on mode.
+    // If we want "Monthly Revenue" to match the report, we should trick calculateFreelanceScenario.
+    // calculationMode "daily_report" currently falls back to "piece" in the call below (my previous edit).
+    // I should change logic to respect daily_report or pass overwrite.
+
+    // But calculateFreelanceScenario computes annualSales internally.
+    // If I want to force a specific monthly sales, I might need to refactor calculateFreelanceScenario
+    // or pass a specific annualSales if mode is daily_report.
+
+    // Let's refactor calculateFreelanceScenario slightly to accept "monthlySalesOverride".
+
+    // Actually, I can just recalculate result.monthlyGrossSales AFTER getting result from function if I want,
+    // but tax calculations depend on it.
+
+    // So, let's pass an "annualSalesOverride" to inputs?
+    // calculateFreelanceScenario takes ScenarioInputs. I can add optional field.
+
     return calculateFreelanceScenario({
-      calculationMode: calculationMode === "daily_report" ? "piece" : calculationMode, // Fallback to piece for calculation if in report mode (or handle effectively)
+      calculationMode: calculationMode === "daily_report" ? "piece" : calculationMode,
       unitPrice: Number(unitPrice),
       deliveryCount: Number(deliveryCount),
-      dailyRecords, // Pass dailyRecords correctly
+      dailyRecords,
+      monthlySalesOverride: calculationMode === "daily_report" ? monthlySalesFromRecords : undefined, // Passing this!
       dailyRate: Number(dailyRate),
       workDays: Number(workDays),
       commissionRate: Number(commissionRate),
@@ -477,9 +519,16 @@ export default function FreelanceSimulator() {
                     onUpdateRecord={handleUpdateRecord}
                     onDeleteRecord={handleDeleteRecord}
                     defaultUnitPrice={Number(unitPrice) || 150}
+                    year={viewYear}
+                    month={viewMonth}
+                    onMonthChange={(y, m) => {
+                      setViewYear(y);
+                      setViewMonth(m);
+                    }}
                   />
                   <div className="mt-4 p-4 bg-indigo-50 text-indigo-900 rounded-lg text-sm">
-                    <p>※日報に入力されたデータは、シミュレーターの「月商」としては現在連動していません。日報としての記録・管理にご利用ください。</p>
+                    <p className="font-bold">月商シミュレーション連動中</p>
+                    <p>表示中の月（{viewYear}年{viewMonth + 1}月）の売上実績を、左の「月商」「本当の手取り」に反映しています。</p>
                   </div>
                 </div>
               ) : (
