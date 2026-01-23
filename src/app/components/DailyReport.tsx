@@ -181,12 +181,12 @@ export default function DailyReport({ records, onUpdateRecord, onDeleteRecord, d
     return (
         <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
             {/* Header */}
-            <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-white">
-                <div className="flex items-center gap-4">
-                    <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <div className="p-2 sm:p-4 border-b border-slate-200 flex items-center justify-between bg-white">
+                <div className="flex items-center gap-2 sm:gap-4">
+                    <h2 className="text-sm sm:text-lg font-bold text-slate-800 flex items-center gap-1 sm:gap-2 whitespace-nowrap">
                         {year}年 {month + 1}月
                     </h2>
-                    <div className="flex gap-1">
+                    <div className="flex gap-0.5 sm:gap-1">
                         <button onClick={handlePrevMonth} className="p-1 hover:bg-slate-100 rounded text-slate-500">
                             &lt;
                         </button>
@@ -197,10 +197,10 @@ export default function DailyReport({ records, onUpdateRecord, onDeleteRecord, d
                 </div>
 
                 <div className="text-right">
-                    <div className="text-xs text-slate-500">当月合計</div>
-                    <div className="flex items-baseline gap-2">
-                        <span className="text-sm font-bold text-indigo-600">{monthlyStats.totalCount}個</span>
-                        <span className="text-lg font-bold text-emerald-600">{fmt(monthlyStats.totalRevenue)}</span>
+                    <div className="text-[10px] sm:text-xs text-slate-500">当月合計</div>
+                    <div className="flex items-baseline gap-1 sm:gap-2">
+                        <span className="text-xs sm:text-sm font-bold text-indigo-600">{monthlyStats.totalCount}個</span>
+                        <span className="text-sm sm:text-lg font-bold text-emerald-600">{fmt(monthlyStats.totalRevenue)}</span>
                     </div>
                 </div>
             </div>
