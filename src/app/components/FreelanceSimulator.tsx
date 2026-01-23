@@ -600,21 +600,23 @@ export default function FreelanceSimulator() {
                 </>
               )}
 
-              {/* Work Days */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-slate-600">月間稼働日数</label>
-                  <span className="text-sm font-semibold text-slate-900">{workDays}日</span>
+              {/* Work Days (Hide in Daily Report Mode) */}
+              {calculationMode !== "daily_report" && (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-sm font-medium text-slate-600">月間稼働日数</label>
+                    <span className="text-sm font-semibold text-slate-900">{workDays}日</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="31"
+                    value={Number(workDays)}
+                    onChange={(e) => setWorkDays(e.target.value)}
+                    className="w-full h-2.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-indigo-600"
+                  />
                 </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="31"
-                  value={Number(workDays)}
-                  onChange={(e) => setWorkDays(e.target.value)}
-                  className="w-full h-2.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-indigo-600"
-                />
-              </div>
+              )}
 
               {/* Commission Rate */}
               <div>
