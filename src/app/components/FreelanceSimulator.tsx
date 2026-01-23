@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
+import DailyReport, { DailyRecord } from "./DailyReport";
 
 // --- Pure Calculation Logic ---
 interface ScenarioInputs {
@@ -23,9 +24,10 @@ interface ScenarioInputs {
   idecoMonthly: number;
   kyosaiMonthly: number;
   // New fields
-  calculationMode: "daily" | "piece";
+  calculationMode: "daily" | "piece" | "daily_report";
   unitPrice: number;
   deliveryCount: number;
+  dailyRecords: Record<string, DailyRecord>;
 }
 
 function calculateFreelanceScenario(inputs: ScenarioInputs) {
@@ -43,6 +45,21 @@ function calculateFreelanceScenario(inputs: ScenarioInputs) {
   if (inputs.calculationMode === "piece") {
     // Piece rate: Unit Price * Count * Work Days * 12
     annualSales = (inputs.unitPrice || 0) * (inputs.deliveryCount || 0) * workDays * 12;
+  } else if (inputs.calculationMode === "daily_report") {
+    // Calculate annual sales from actual records logic?
+    // For "daily_report" mode, we might just look at the last month or average?
+    // Let's implement a simple logic: calculate monthly stats from records and multiply by 12?
+    // Or maybe we don't use this calculate function for daily_report visualization directly?
+    // For now, let's keep annualSales as 0 or calculate from records if provided.
+
+    // We can't easily calculate "Annual" from "Daily Records" without assumption.
+    // Let's assume the monthly average of records * 12.
+    // However, simple approach:
+    annualSales = 0; // Handled separately in UI or we pass monthly average here?
+    // Actually, let's skip modification of this function for "daily_report" logic deep dive
+    // and handle it by passing "simulated" values if we want to re-use this function for the chart.
+    // But better: If mode is daily_report, we might want to override the result.
+    // For simplicity, let's rely on the UI to show 'Actual' and keep this function for 'Projection'.
   } else {
     // Daily rate: Daily Rate * Work Days * 12
     annualSales = dailyRate * workDays * 12;
@@ -109,11 +126,14 @@ export default function FreelanceSimulator() {
   // State
   // State
   // State
-  const [calculationMode, setCalculationMode] = useState<"daily" | "piece">("daily");
+  // State
+  const [calculationMode, setCalculationMode] = useState<"daily" | "piece" | "daily_report">("daily");
   const [unitPrice, setUnitPrice] = useState<string>("");
   const [deliveryCount, setDeliveryCount] = useState<string>("");
   const [dailyRate, setDailyRate] = useState<string>("");
   const [workDays, setWorkDays] = useState<string>("");
+
+  const [dailyRecords, setDailyRecords] = useState<Record<string, DailyRecord>>({});
   const [commissionRate, setCommissionRate] = useState<string>("");
   const [businessGuarantee, setBusinessGuarantee] = useState<string>("");
   const [cargoInsurance, setCargoInsurance] = useState<string>("");
@@ -178,14 +198,27 @@ export default function FreelanceSimulator() {
     setAnnualCustomExpenses(updated);
   };
 
+  const handleUpdateRecord = (record: DailyRecord) => {
+    setDailyRecords(prev => ({ ...prev, [record.date]: record }));
+  };
+
+  const handleDeleteRecord = (date: string) => {
+    setDailyRecords(prev => {
+      const next = { ...prev };
+      delete next[date];
+      return next;
+    });
+  };
+
   const result = useMemo(() => {
     const customExpensesTotal = customExpenses.reduce((sum, item) => sum + Number(item.amount), 0);
     const annualCustomExpensesTotal = annualCustomExpenses.reduce((sum, item) => sum + Number(item.amount), 0);
 
     return calculateFreelanceScenario({
-      calculationMode,
+      calculationMode: calculationMode === "daily_report" ? "piece" : calculationMode, // Fallback to piece for calculation if in report mode (or handle effectively)
       unitPrice: Number(unitPrice),
       deliveryCount: Number(deliveryCount),
+      dailyRecords, // Pass dailyRecords correctly
       dailyRate: Number(dailyRate),
       workDays: Number(workDays),
       commissionRate: Number(commissionRate),
@@ -210,7 +243,7 @@ export default function FreelanceSimulator() {
     dailyRate, workDays, commissionRate, businessGuarantee, cargoInsurance,
     vehicleRental, vehicleInsurance, mapApp, customExpenses, annualCustomExpenses,
     healthInsurance, pension, incomeTax, residentTax, businessTax, consumptionTax,
-    idecoMonthly, kyosaiMonthly,
+    idecoMonthly, kyosaiMonthly, dailyRecords
   ]);
 
   // Load data from LocalStorage on mount
@@ -240,6 +273,7 @@ export default function FreelanceSimulator() {
         if (data.consumptionTax !== undefined) setConsumptionTax(String(data.consumptionTax));
         if (data.idecoMonthly !== undefined) setIdecoMonthly(String(data.idecoMonthly));
         if (data.kyosaiMonthly !== undefined) setKyosaiMonthly(String(data.kyosaiMonthly));
+        if (data.dailyRecords !== undefined) setDailyRecords(data.dailyRecords);
       } catch (e) {
         console.error("Failed to load saved data:", e);
       }
@@ -270,6 +304,7 @@ export default function FreelanceSimulator() {
       consumptionTax,
       idecoMonthly,
       kyosaiMonthly,
+      dailyRecords,
     };
     localStorage.setItem("freelance-simulator-data", JSON.stringify(dataToSave));
   }, [
@@ -277,7 +312,7 @@ export default function FreelanceSimulator() {
     dailyRate, workDays, commissionRate, businessGuarantee, cargoInsurance,
     vehicleRental, vehicleInsurance, mapApp, customExpenses, annualCustomExpenses,
     healthInsurance, pension, incomeTax, residentTax, businessTax, consumptionTax,
-    idecoMonthly, kyosaiMonthly,
+    idecoMonthly, kyosaiMonthly, dailyRecords
   ]);
 
   // Reset all data
@@ -306,6 +341,7 @@ export default function FreelanceSimulator() {
       setConsumptionTax("");
       setIdecoMonthly("");
       setKyosaiMonthly("");
+      setDailyRecords({});
     }
   };
 
@@ -426,71 +462,93 @@ export default function FreelanceSimulator() {
                 >
                   個数計算
                 </button>
+                <button
+                  onClick={() => setCalculationMode("daily_report")}
+                  className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${calculationMode === "daily_report" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                >
+                  日報管理
+                </button>
               </div>
 
-              {calculationMode === "daily" ? (
-                /* Daily Rate Input */
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm font-medium text-slate-600">
-                      日給単価 (税込)
-                    </label>
-                  </div>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    value={dailyRate}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (/^\d*$/.test(val)) setDailyRate(val);
-                    }}
-                    className="w-full px-4 py-2.5 text-right text-lg font-mono bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                    placeholder="0"
+              {calculationMode === "daily_report" ? (
+                <div className="col-span-full">
+                  <DailyReport
+                    records={dailyRecords}
+                    onUpdateRecord={handleUpdateRecord}
+                    onDeleteRecord={handleDeleteRecord}
+                    defaultUnitPrice={Number(unitPrice) || 150}
                   />
+                  <div className="mt-4 p-4 bg-indigo-50 text-indigo-900 rounded-lg text-sm">
+                    <p>※日報に入力されたデータは、シミュレーターの「月商」としては現在連動していません。日報としての記録・管理にご利用ください。</p>
+                  </div>
                 </div>
               ) : (
-                /* Piece Rate Inputs */
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="text-sm font-medium text-slate-600">
-                        単価
-                      </label>
+                <>
+                  {calculationMode === "daily" ? (
+                    /* Daily Rate Input */
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-sm font-medium text-slate-600">
+                          日給単価 (税込)
+                        </label>
+                      </div>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={dailyRate}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (/^\d*$/.test(val)) setDailyRate(val);
+                        }}
+                        className="w-full px-4 py-2.5 text-right text-lg font-mono bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                        placeholder="0"
+                      />
                     </div>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      value={unitPrice}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (/^\d*$/.test(val)) setUnitPrice(val);
-                      }}
-                      className="w-full px-4 py-2.5 text-right text-lg font-mono bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                      placeholder="0"
-                    />
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="text-sm font-medium text-slate-600">
-                        配達個数/日
-                      </label>
+                  ) : (
+                    /* Piece Rate Inputs */
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-sm font-medium text-slate-600">
+                            単価
+                          </label>
+                        </div>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          value={unitPrice}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (/^\d*$/.test(val)) setUnitPrice(val);
+                          }}
+                          className="w-full px-4 py-2.5 text-right text-lg font-mono bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                          placeholder="0"
+                        />
+                      </div>
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-sm font-medium text-slate-600">
+                            配達個数/日
+                          </label>
+                        </div>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          value={deliveryCount}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (/^\d*$/.test(val)) setDeliveryCount(val);
+                          }}
+                          className="w-full px-4 py-2.5 text-right text-lg font-mono bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                          placeholder="0"
+                        />
+                      </div>
                     </div>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      value={deliveryCount}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (/^\d*$/.test(val)) setDeliveryCount(val);
-                      }}
-                      className="w-full px-4 py-2.5 text-right text-lg font-mono bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                      placeholder="0"
-                    />
-                  </div>
-                </div>
+                  )}
+                </>
               )}
 
               {/* Work Days */}
