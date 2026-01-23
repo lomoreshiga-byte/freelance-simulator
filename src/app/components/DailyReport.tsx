@@ -144,25 +144,28 @@ export default function DailyReport({ records, onUpdateRecord, onDeleteRecord, d
             <div
                 key={dateKey}
                 onClick={() => handleDateClick(d)}
-                className={`h-24 border-b border-r border-slate-100 p-1 relative hover:bg-indigo-50 transition-colors cursor-pointer group ${isToday ? "bg-amber-50" : "bg-white"}`}
+                className={`min-h-[5rem] sm:h-24 border-b border-r border-slate-100 p-0.5 sm:p-1 relative hover:bg-indigo-50 transition-colors cursor-pointer group ${isToday ? "bg-amber-50" : "bg-white"}`}
             >
                 <div className="flex justify-between items-start">
-                    <span className={`text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full ${isToday ? "bg-amber-400 text-white" : "text-slate-400 group-hover:text-indigo-600"}`}>
+                    <span className={`text-[10px] sm:text-xs font-medium w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full ${isToday ? "bg-amber-400 text-white" : "text-slate-400 group-hover:text-indigo-600"}`}>
                         {d}
                     </span>
-                    {record && (
-                        <div className="text-[10px] font-bold text-slate-300">
-                            {record.unitPrice ? "custom" : ""}
+                    {record && record.unitPrice ? (
+                        <div className="hidden sm:block text-[10px] font-bold text-slate-300">
+                            custom
                         </div>
-                    )}
+                    ) : null}
+                    {record && record.unitPrice ? (
+                        <div className="block sm:hidden w-1.5 h-1.5 rounded-full bg-slate-300 mt-1 mr-1"></div>
+                    ) : null}
                 </div>
 
                 {record ? (
-                    <div className="mt-1 text-right">
-                        <div className="text-lg font-bold text-indigo-600 leading-none">
-                            {record.count}<span className="text-[10px] font-normal text-slate-400 ml-0.5">個</span>
+                    <div className="mt-0.5 sm:mt-1 text-right">
+                        <div className="text-sm sm:text-lg font-bold text-indigo-600 leading-none">
+                            {record.count}<span className="text-[10px] sm:text-xs font-normal text-slate-400 ml-0.5">個</span>
                         </div>
-                        <div className="text-xs font-medium text-emerald-600">
+                        <div className="text-[10px] sm:text-xs font-medium text-emerald-600 leading-tight sm:leading-normal">
                             {fmt(revenue)}
                         </div>
                     </div>
