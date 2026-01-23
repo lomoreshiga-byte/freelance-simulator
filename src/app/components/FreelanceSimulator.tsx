@@ -22,6 +22,10 @@ interface ScenarioInputs {
   consumptionTax: number;
   idecoMonthly: number;
   kyosaiMonthly: number;
+  // New fields
+  calculationMode: "daily" | "piece";
+  unitPrice: number;
+  deliveryCount: number;
 }
 
 function calculateFreelanceScenario(inputs: ScenarioInputs) {
@@ -33,7 +37,17 @@ function calculateFreelanceScenario(inputs: ScenarioInputs) {
   } = inputs;
 
   const annualExpensesMonthlyBuffer = annualCustomExpensesTotal / 12;
-  const annualSales = dailyRate * workDays * 12;
+
+
+  let annualSales = 0;
+  if (inputs.calculationMode === "piece") {
+    // Piece rate: Unit Price * Count * Work Days * 12
+    annualSales = (inputs.unitPrice || 0) * (inputs.deliveryCount || 0) * workDays * 12;
+  } else {
+    // Daily rate: Daily Rate * Work Days * 12
+    annualSales = dailyRate * workDays * 12;
+  }
+
   const monthlyGrossSales = annualSales / 12;
   const monthlyCommission = monthlyGrossSales * (commissionRate / 100);
   const monthlyFixedExpenses = businessGuarantee + cargoInsurance + vehicleRental + vehicleInsurance + mapApp + customExpensesTotal + annualExpensesMonthlyBuffer;
@@ -94,6 +108,10 @@ export default function FreelanceSimulator() {
 
   // State
   // State
+  // State
+  const [calculationMode, setCalculationMode] = useState<"daily" | "piece">("daily");
+  const [unitPrice, setUnitPrice] = useState<string>("");
+  const [deliveryCount, setDeliveryCount] = useState<string>("");
   const [dailyRate, setDailyRate] = useState<string>("");
   const [workDays, setWorkDays] = useState<string>("");
   const [commissionRate, setCommissionRate] = useState<string>("");
@@ -165,6 +183,9 @@ export default function FreelanceSimulator() {
     const annualCustomExpensesTotal = annualCustomExpenses.reduce((sum, item) => sum + Number(item.amount), 0);
 
     return calculateFreelanceScenario({
+      calculationMode,
+      unitPrice: Number(unitPrice),
+      deliveryCount: Number(deliveryCount),
       dailyRate: Number(dailyRate),
       workDays: Number(workDays),
       commissionRate: Number(commissionRate),
@@ -185,6 +206,7 @@ export default function FreelanceSimulator() {
       kyosaiMonthly: Number(kyosaiMonthly),
     });
   }, [
+    calculationMode, unitPrice, deliveryCount,
     dailyRate, workDays, commissionRate, businessGuarantee, cargoInsurance,
     vehicleRental, vehicleInsurance, mapApp, customExpenses, annualCustomExpenses,
     healthInsurance, pension, incomeTax, residentTax, businessTax, consumptionTax,
@@ -197,6 +219,9 @@ export default function FreelanceSimulator() {
     if (savedData) {
       try {
         const data = JSON.parse(savedData);
+        if (data.calculationMode !== undefined) setCalculationMode(data.calculationMode);
+        if (data.unitPrice !== undefined) setUnitPrice(String(data.unitPrice));
+        if (data.deliveryCount !== undefined) setDeliveryCount(String(data.deliveryCount));
         if (data.dailyRate !== undefined) setDailyRate(String(data.dailyRate));
         if (data.workDays !== undefined) setWorkDays(String(data.workDays));
         if (data.commissionRate !== undefined) setCommissionRate(String(data.commissionRate));
@@ -224,6 +249,9 @@ export default function FreelanceSimulator() {
   // Save data to LocalStorage whenever state changes
   useEffect(() => {
     const dataToSave = {
+      calculationMode,
+      unitPrice,
+      deliveryCount,
       dailyRate,
       workDays,
       commissionRate,
@@ -245,6 +273,7 @@ export default function FreelanceSimulator() {
     };
     localStorage.setItem("freelance-simulator-data", JSON.stringify(dataToSave));
   }, [
+    calculationMode, unitPrice, deliveryCount,
     dailyRate, workDays, commissionRate, businessGuarantee, cargoInsurance,
     vehicleRental, vehicleInsurance, mapApp, customExpenses, annualCustomExpenses,
     healthInsurance, pension, incomeTax, residentTax, businessTax, consumptionTax,
@@ -255,6 +284,10 @@ export default function FreelanceSimulator() {
   const resetAllData = () => {
     if (confirm("全てのデータをリセットしますか?")) {
       localStorage.removeItem("freelance-simulator-data");
+      localStorage.removeItem("freelance-simulator-data");
+      setCalculationMode("daily");
+      setUnitPrice("");
+      setDeliveryCount("");
       setDailyRate("");
       setWorkDays("");
       setCommissionRate("");
@@ -377,26 +410,88 @@ export default function FreelanceSimulator() {
             </div>
 
             <div className="space-y-6">
-              {/* Daily Rate */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-slate-600">
-                    日給単価 (税込)
-                  </label>
-                </div>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  value={dailyRate}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (/^\d*$/.test(val)) setDailyRate(val);
-                  }}
-                  className="w-full px-4 py-2.5 text-right text-lg font-mono bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                  placeholder="0"
-                />
+
+
+              {/* Mode Switcher */}
+              <div className="flex bg-slate-100 p-1 rounded-lg mb-4">
+                <button
+                  onClick={() => setCalculationMode("daily")}
+                  className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${calculationMode === "daily" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                >
+                  日給計算
+                </button>
+                <button
+                  onClick={() => setCalculationMode("piece")}
+                  className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${calculationMode === "piece" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                >
+                  個数計算
+                </button>
               </div>
+
+              {calculationMode === "daily" ? (
+                /* Daily Rate Input */
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-sm font-medium text-slate-600">
+                      日給単価 (税込)
+                    </label>
+                  </div>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={dailyRate}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (/^\d*$/.test(val)) setDailyRate(val);
+                    }}
+                    className="w-full px-4 py-2.5 text-right text-lg font-mono bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                    placeholder="0"
+                  />
+                </div>
+              ) : (
+                /* Piece Rate Inputs */
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-sm font-medium text-slate-600">
+                        単価
+                      </label>
+                    </div>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={unitPrice}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (/^\d*$/.test(val)) setUnitPrice(val);
+                      }}
+                      className="w-full px-4 py-2.5 text-right text-lg font-mono bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                      placeholder="0"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-sm font-medium text-slate-600">
+                        配達個数/日
+                      </label>
+                    </div>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={deliveryCount}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (/^\d*$/.test(val)) setDeliveryCount(val);
+                      }}
+                      className="w-full px-4 py-2.5 text-right text-lg font-mono bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Work Days */}
               <div>
